@@ -89,6 +89,25 @@
                   <p class="text-red-600">{{ error }}</p>
                 </div>
 
+                <!-- 验证提示 -->
+                <div
+                  v-if="!canSubmit && !submitting"
+                  class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+                >
+                  <p class="text-yellow-800 text-sm font-medium mb-2">请完成以下信息：</p>
+                  <ul class="text-sm text-yellow-700 space-y-1">
+                    <li v-if="!form.checkInDate || !form.checkOutDate">✗ 请选择入住和退房日期</li>
+                    <li v-if="!form.guestName.trim()">✗ 请输入姓名</li>
+                    <li v-if="!form.guestPhone.trim()">✗ 请输入手机号码</li>
+                    <li v-if="form.guestPhone.trim() && !/^[0-9]{11}$/.test(form.guestPhone)">
+                      ✗ 请输入有效的11位手机号码
+                    </li>
+                    <li v-if="form.guestCount <= 0 || form.guestCount > maxOccupancy">
+                      ✗ 客人数量无效
+                    </li>
+                  </ul>
+                </div>
+
                 <!-- 提交按钮 -->
                 <button
                   type="submit"
