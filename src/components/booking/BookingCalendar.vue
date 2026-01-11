@@ -327,7 +327,7 @@ const checkAvailability = async () => {
     const endDate = formatDateToString(new Date(currentYear.value, currentMonth.value + 1, 0))
 
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/rooms/availability/check?check_in_date=${startDate}&check_out_date=${endDate}&room_type_id=${props.roomTypeId}`,
+      `${import.meta.env.VITE_API_BASE_URL}/rooms/availability/check?check_in_date=${startDate}&check_out_date=${endDate}&room_type_id=${props.roomTypeId}`,
     )
     const data = await response.json()
 

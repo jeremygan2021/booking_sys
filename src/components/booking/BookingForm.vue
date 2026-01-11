@@ -243,7 +243,7 @@ const fetchRoomType = async () => {
 
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/rooms/types/${roomTypeId.value}`,
+      `${import.meta.env.VITE_API_BASE_URL}/rooms/types/${roomTypeId.value}`,
     )
     const data = await response.json()
 
@@ -286,7 +286,7 @@ const submitBooking = async () => {
   try {
     // 首先获取可用房间
     const availabilityResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/rooms/availability/check?check_in_date=${form.value.checkInDate}&check_out_date=${form.value.checkOutDate}&room_type_id=${roomTypeId.value}`,
+      `${import.meta.env.VITE_API_BASE_URL}/rooms/availability/check?check_in_date=${form.value.checkInDate}&check_out_date=${form.value.checkOutDate}&room_type_id=${roomTypeId.value}`,
     )
     const availabilityData = await availabilityResponse.json()
 
@@ -299,7 +299,7 @@ const submitBooking = async () => {
     const availableRoom = availabilityData.data.available_rooms[0]
 
     // 创建预订
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/rooms/bookings`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms/bookings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

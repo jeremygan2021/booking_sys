@@ -305,7 +305,7 @@ async function saveBooking() {
 
   saving.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     const headers = { Authorization: `Bearer ${token}` }
     const endpoint =
       editingBooking.value.type === 'room'

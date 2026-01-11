@@ -299,7 +299,7 @@ const loadBookings = async () => {
 
     // Load room bookings
     const roomResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/bookings/room?start_date=${startDate}&end_date=${endDate}`,
+      `${import.meta.env.VITE_API_BASE_URL}/rooms/bookings?start_date=${startDate}&end_date=${endDate}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -314,7 +314,7 @@ const loadBookings = async () => {
 
     // Load restaurant bookings
     const restaurantResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/bookings/restaurant?start_date=${startDate}&end_date=${endDate}`,
+      `${import.meta.env.VITE_API_BASE_URL}/restaurant/bookings?start_date=${startDate}&end_date=${endDate}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
