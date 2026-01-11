@@ -1,6 +1,36 @@
 <template>
   <div class="booking-management">
     <div class="management-header">
+      <div class="search-section">
+        <div class="search-box">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            v-model="searchPhone"
+            type="text"
+            class="search-input"
+            placeholder="输入手机号码搜索预订..."
+            @input="handlePhoneSearch"
+          />
+          <button v-if="searchPhone" @click="clearSearch" class="clear-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <div class="filters">
         <select v-model="filterType" class="filter-select">
           <option value="all">所有预订</option>
@@ -47,7 +77,12 @@
 
           <template #cell-guest="{ row }">
             <div class="guest-info">
-              <p class="font-medium">{{ (row as Booking).user_name || '未知' }}</p>
+              <p class="font-medium">
+                {{ (row as Booking).guest_name || (row as Booking).user_name || '未知' }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{ (row as Booking).guest_phone || (row as Booking).user_phone || '无电话' }}
+              </p>
               <p class="text-xs text-gray-600">{{ (row as Booking).guest_count }} 人</p>
             </div>
           </template>
@@ -126,15 +161,19 @@
           <div class="detail-grid">
             <div class="detail-item">
               <span class="detail-label">姓名</span>
-              <span class="detail-value">{{ selectedBooking.user_name || '未知' }}</span>
+              <span class="detail-value">{{
+                selectedBooking.guest_name || selectedBooking.user_name || '未知'
+              }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">电话</span>
+              <span class="detail-value">{{
+                selectedBooking.guest_phone || selectedBooking.user_phone || '未提供'
+              }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">邮箱</span>
               <span class="detail-value">{{ selectedBooking.user_email || '未提供' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">电话</span>
-              <span class="detail-value">{{ selectedBooking.user_phone || '未提供' }}</span>
             </div>
           </div>
         </div>
@@ -194,6 +233,8 @@ interface Booking {
   user_name?: string
   user_email?: string
   user_phone?: string
+  guest_name?: string
+  guest_phone?: string
   guest_count?: number
   special_requests?: string
   total_price?: number | string
@@ -209,6 +250,7 @@ const restaurantBookings = ref<Booking[]>([])
 const filterType = ref('all')
 const filterStatus = ref('all')
 const filterDate = ref('')
+const searchPhone = ref('')
 
 const showDetailModal = ref(false)
 const showEditModal = ref(false)
@@ -236,6 +278,15 @@ const allBookings = computed(() => {
 
 const displayBookings = computed(() => {
   let filtered = allBookings.value
+
+  // 电话号码搜索优先
+  if (searchPhone.value) {
+    const phoneQuery = searchPhone.value.trim()
+    filtered = filtered.filter((b) => {
+      const phone = b.guest_phone || b.user_phone || ''
+      return phone.includes(phoneQuery)
+    })
+  }
 
   if (filterType.value !== 'all') {
     filtered = filtered.filter((b) => b.type === filterType.value)
@@ -288,6 +339,15 @@ function resetFilters() {
   filterType.value = 'all'
   filterStatus.value = 'all'
   filterDate.value = ''
+  searchPhone.value = ''
+}
+
+function handlePhoneSearch() {
+  // 实时搜索，computed 会自动更新
+}
+
+function clearSearch() {
+  searchPhone.value = ''
 }
 
 function viewBooking(booking: Booking) {
@@ -354,6 +414,62 @@ function formatDate(date?: string) {
 
 .management-header {
   margin-bottom: 2rem;
+}
+
+.search-section {
+  margin-bottom: 1.5rem;
+}
+
+.search-box {
+  position: relative;
+  max-width: 500px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 3rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-deep-blue);
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover {
+  color: #6b7280;
 }
 
 .filters {

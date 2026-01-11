@@ -683,11 +683,13 @@ export const updateRoomBookingStatus = async (req, res, next) => {
  */
 export const getAllRoomBookings = async (req, res, next) => {
   try {
-    const { status, start_date, end_date } = req.query;
+    const { status, start_date, end_date, phone } = req.query;
 
     let query = `
       SELECT rb.*, r.room_number, rt.name as room_type_name,
-             u.full_name as guest_name, u.email as guest_email, u.phone as guest_phone
+             COALESCE(rb.guest_name, u.full_name) as guest_name,
+             u.email as guest_email,
+             COALESCE(rb.guest_phone, u.phone) as guest_phone
       FROM room_bookings rb
       LEFT JOIN rooms r ON rb.room_id = r.id
       LEFT JOIN room_types rt ON r.room_type_id = rt.id
@@ -697,6 +699,13 @@ export const getAllRoomBookings = async (req, res, next) => {
 
     const params = [];
     let paramCount = 0;
+
+    // 电话号码搜索优先
+    if (phone) {
+      paramCount++;
+      query += ` AND (rb.guest_phone LIKE $${paramCount} OR u.phone LIKE $${paramCount})`;
+      params.push(`%${phone}%`);
+    }
 
     if (status) {
       paramCount++;

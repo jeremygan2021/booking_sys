@@ -63,6 +63,7 @@ export const getMealPackages = async (req, res, next) => {
     const params = [];
     
     if (meal_type) {
+      paramCount++;
       params.push(meal_type);
       query += ` AND mp.meal_type = $${params.length}`;
     }
@@ -127,6 +128,7 @@ export const getTimeSlots = async (req, res, next) => {
     const params = [];
     
     if (meal_type) {
+      paramCount++;
       params.push(meal_type);
       query += ` AND meal_type = $${params.length}`;
     }
@@ -402,36 +404,50 @@ export const createRestaurantBooking = async (req, res, next) => {
  */
 export const getRestaurantBookings = async (req, res, next) => {
   try {
-    const { user_id, status, date, meal_type } = req.query;
+    const { user_id, status, date, meal_type, phone } = req.query;
     
     let query = `
       SELECT rb.*, mp.name as package_name, mp.price as package_price,
-             u.full_name as user_name, u.email as user_email
+             COALESCE(rb.guest_name, u.full_name) as user_name,
+             u.email as user_email,
+             COALESCE(rb.guest_phone, u.phone) as user_phone
       FROM restaurant_bookings rb
       LEFT JOIN meal_packages mp ON rb.package_id = mp.id
       LEFT JOIN users u ON rb.user_id = u.id
       WHERE 1=1
     `;
     const params = [];
+    let paramCount = 0;
+    
+    // 电话号码搜索优先
+    if (phone) {
+      paramCount++;
+      query += ` AND (rb.guest_phone LIKE $${paramCount} OR u.phone LIKE $${paramCount})`;
+      params.push(`%${phone}%`);
+    }
     
     if (user_id) {
+      paramCount++;
+      query += ` AND rb.user_id = $${paramCount}`;
       params.push(user_id);
-      query += ` AND rb.user_id = $${params.length}`;
     }
     
     if (status) {
+      paramCount++;
+      query += ` AND rb.status = $${paramCount}`;
       params.push(status);
-      query += ` AND rb.status = $${params.length}`;
     }
     
     if (date) {
+      paramCount++;
+      query += ` AND rb.booking_date = $${paramCount}`;
       params.push(date);
-      query += ` AND rb.booking_date = $${params.length}`;
     }
     
     if (meal_type) {
+      paramCount++;
+      query += ` AND rb.meal_type = $${paramCount}`;
       params.push(meal_type);
-      query += ` AND rb.meal_type = $${params.length}`;
     }
     
     query += ' ORDER BY rb.booking_date DESC, rb.time_slot DESC';
@@ -505,6 +521,7 @@ export const updateRestaurantBooking = async (req, res, next) => {
     const params = [];
     
     if (status) {
+      paramCount++;
       params.push(status);
       updates.push(`status = $${params.length}`);
     }
