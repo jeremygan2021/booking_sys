@@ -112,7 +112,7 @@ onMounted(() => {
   // Listen for beforeinstallprompt event
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
-    deferredPrompt = e
+    deferredPrompt = e as BeforeInstallPromptEvent
 
     // Show prompt after a short delay
     setTimeout(() => {

@@ -170,6 +170,20 @@ import { AdminCard, AdminButton, AdminModal } from '@/components/admin'
 import ImageManager from '@/components/admin/ImageManager.vue'
 import axios from 'axios'
 
+interface RoomType {
+  id: string | number
+  name: string
+  description?: string
+  base_price?: number
+  max_occupancy?: number
+}
+
+interface Cuisine {
+  id: string | number
+  name: string
+  description?: string
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 const activeTab = ref('rooms')
@@ -183,16 +197,16 @@ const tabs = [
 ]
 
 // Room Types
-const roomTypes = ref<Array<Record<string, unknown>>>([])
+const roomTypes = ref<RoomType[]>([])
 const showRoomModal = ref(false)
-const editingRoom = ref<Record<string, unknown> | null>(null)
+const editingRoom = ref<RoomType | null>(null)
 
 // Restaurant Content
 const restaurantContent = ref('<p>欢迎来到爱云香舍餐厅...</p>')
 const originalRestaurantContent = ref('')
 
 // Cuisines
-const cuisines = ref<Array<Record<string, unknown>>>([])
+const cuisines = ref<Cuisine[]>([])
 const showAddCuisineModal = ref(false)
 const newCuisine = ref({ name: '', description: '' })
 
@@ -253,7 +267,7 @@ onMounted(async () => {
 
 async function loadRoomTypes() {
   try {
-    const response = await axios.get(`${API_BASE}/api/content/room-types`)
+    const response = await axios.get(`${API_BASE}/content/room-types`)
     roomTypes.value = response.data
   } catch (error) {
     console.error('Failed to load room types:', error)
@@ -262,7 +276,7 @@ async function loadRoomTypes() {
 
 async function loadCuisines() {
   try {
-    const response = await axios.get(`${API_BASE}/api/restaurant/cuisines`)
+    const response = await axios.get(`${API_BASE}/restaurant/cuisines`)
     cuisines.value = response.data.success ? response.data.data : response.data
   } catch (error) {
     console.error('Failed to load cuisines:', error)
@@ -271,7 +285,7 @@ async function loadCuisines() {
 
 async function loadRestaurantContent() {
   try {
-    const response = await axios.get(`${API_BASE}/api/content/restaurant`)
+    const response = await axios.get(`${API_BASE}/content/restaurant`)
     if (response.data && response.data.content) {
       restaurantContent.value = response.data.content
       originalRestaurantContent.value = response.data.content
@@ -281,7 +295,7 @@ async function loadRestaurantContent() {
   }
 }
 
-function editRoomType(room: Record<string, unknown>) {
+function editRoomType(room: RoomType) {
   editingRoom.value = { ...room }
   showRoomModal.value = true
 }
@@ -291,7 +305,7 @@ async function saveRoomType() {
 
   saving.value = true
   try {
-    await axios.put(`${API_BASE}/api/content/room-types/${editingRoom.value.id}`, editingRoom.value)
+    await axios.put(`${API_BASE}/content/room-types/${editingRoom.value.id}`, editingRoom.value)
     await loadRoomTypes()
     showRoomModal.value = false
     alert('房间类型已更新')
@@ -327,7 +341,7 @@ function resetContent() {
 async function saveRestaurantContent() {
   saving.value = true
   try {
-    await axios.put(`${API_BASE}/api/content/restaurant`, {
+    await axios.put(`${API_BASE}/content/restaurant`, {
       content: restaurantContent.value,
     })
     originalRestaurantContent.value = restaurantContent.value
@@ -340,7 +354,7 @@ async function saveRestaurantContent() {
   }
 }
 
-function editCuisine(cuisine: Record<string, unknown>) {
+function editCuisine(cuisine: Cuisine) {
   newCuisine.value = { ...cuisine } as { name: string; description: string }
   showAddCuisineModal.value = true
 }
@@ -353,7 +367,7 @@ async function addCuisine() {
 
   saving.value = true
   try {
-    await axios.post(`${API_BASE}/api/restaurant/cuisines`, newCuisine.value)
+    await axios.post(`${API_BASE}/restaurant/cuisines`, newCuisine.value)
     await loadCuisines()
     showAddCuisineModal.value = false
     newCuisine.value = { name: '', description: '' }
@@ -366,11 +380,11 @@ async function addCuisine() {
   }
 }
 
-async function deleteCuisine(id: string) {
+async function deleteCuisine(id: string | number) {
   if (!confirm('确定要删除这个菜系吗？')) return
 
   try {
-    await axios.delete(`${API_BASE}/api/restaurant/cuisines/${id}`)
+    await axios.delete(`${API_BASE}/restaurant/cuisines/${id}`)
     await loadCuisines()
     alert('菜系已删除')
   } catch (error) {

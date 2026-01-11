@@ -1,21 +1,21 @@
 <template>
-  <div class="about-view">
+  <div class="contact-view">
     <div class="container">
-      <h1 class="page-title">关于我们</h1>
+      <h1 class="page-title">联系我们</h1>
       <div class="content">
-        <p>欢迎来到爱云香舍预订系统</p>
-        <p>更多信息即将推出...</p>
+        <p>如有任何问题，请联系我们</p>
+        <p>更多联系方式即将推出...</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// About page component
+// Contact page component
 </script>
 
 <style scoped>
-.about-view {
+.contact-view {
   padding: 2rem 0;
   min-height: 60vh;
 }

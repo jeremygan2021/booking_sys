@@ -86,7 +86,7 @@ async function handleSubmit() {
 <style scoped>
 .login-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, theme('colors.cream') 0%, theme('colors.gold') / 10% 100%);
+  background: linear-gradient(135deg, var(--color-cream) 0%, rgba(212, 175, 55, 0.1) 100%);
   padding: 2rem;
 }
 </style>

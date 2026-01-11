@@ -28,17 +28,6 @@
           >
             {{ item.label }}
           </router-link>
-
-          <!-- Auth Links -->
-          <template v-if="isAuthenticated">
-            <router-link to="/admin" class="nav-link" active-class="nav-link-active"
-              >管理后台</router-link
-            >
-            <button @click="handleLogout" class="nav-link">退出</button>
-          </template>
-          <router-link v-else to="/login" class="nav-link" active-class="nav-link-active"
-            >登录</router-link
-          >
         </nav>
 
         <!-- Mobile Menu Button -->
@@ -86,28 +75,6 @@
           >
             {{ item.label }}
           </router-link>
-
-          <!-- Mobile Auth Links -->
-          <template v-if="isAuthenticated">
-            <router-link
-              to="/admin"
-              class="mobile-nav-link"
-              active-class="mobile-nav-link-active"
-              @click="closeMobileMenu"
-            >
-              管理后台
-            </router-link>
-            <button @click="handleLogout" class="mobile-nav-link w-full text-left">退出</button>
-          </template>
-          <router-link
-            v-else
-            to="/login"
-            class="mobile-nav-link"
-            active-class="mobile-nav-link-active"
-            @click="closeMobileMenu"
-          >
-            登录
-          </router-link>
         </nav>
       </transition>
     </Container>
@@ -116,12 +83,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import Container from '../ui/Container.vue'
-import { useAuth } from '@/composables/useAuth'
-
-const router = useRouter()
-const { isAuthenticated, logout } = useAuth()
 
 interface NavigationItem {
   label: string
@@ -143,12 +105,6 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
-}
-
-const handleLogout = () => {
-  logout()
-  closeMobileMenu()
-  router.push('/login')
 }
 </script>
 

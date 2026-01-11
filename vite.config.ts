@@ -1,6 +1,7 @@
+/// <reference types="vitest" />
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
@@ -30,5 +31,10 @@ export default defineConfig({
   // Optimize dependencies
   optimizeDeps: {
     include: ['vue', 'vue-router', 'pinia'],
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: ['./src/tests/setup.ts'],
   },
 })

@@ -164,15 +164,24 @@ import { ref, computed, onMounted } from 'vue'
 import { AdminCard, AdminButton, AdminModal } from '@/components/admin'
 import axios from 'axios'
 
+interface TimeSlot {
+  id?: string | number
+  meal_type: string
+  start_time: string
+  end_time: string
+  max_capacity: number
+  is_active: boolean
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 const activeTab = ref('lunch')
 const loading = ref(false)
 const saving = ref(false)
-const timeSlots = ref<Array<Record<string, unknown>>>([])
+const timeSlots = ref<TimeSlot[]>([])
 
 const showTimeSlotModal = ref(false)
-const editingSlot = ref<Record<string, unknown> | null>(null)
+const editingSlot = ref<TimeSlot | null>(null)
 const isEditing = ref(false)
 
 const tabs = [
@@ -190,7 +199,7 @@ onMounted(() => {
 async function loadTimeSlots() {
   loading.value = true
   try {
-    const response = await axios.get(`${API_BASE}/api/restaurant/time-slots`)
+    const response = await axios.get(`${API_BASE}/restaurant/time-slots`)
     timeSlots.value = response.data.success ? response.data.data : response.data
   } catch (error) {
     console.error('Failed to load time slots:', error)
@@ -212,7 +221,7 @@ function addTimeSlot(mealType: string) {
   showTimeSlotModal.value = true
 }
 
-function editTimeSlot(slot: Record<string, unknown>) {
+function editTimeSlot(slot: TimeSlot) {
   editingSlot.value = { ...slot }
   isEditing.value = true
   showTimeSlotModal.value = true
@@ -232,13 +241,11 @@ async function saveTimeSlot() {
     const headers = { Authorization: `Bearer ${token}` }
 
     if (isEditing.value) {
-      await axios.put(
-        `${API_BASE}/api/admin/time-slots/${editingSlot.value.id}`,
-        editingSlot.value,
-        { headers },
-      )
+      await axios.put(`${API_BASE}/admin/time-slots/${editingSlot.value.id}`, editingSlot.value, {
+        headers,
+      })
     } else {
-      await axios.post(`${API_BASE}/api/admin/time-slots`, editingSlot.value, { headers })
+      await axios.post(`${API_BASE}/admin/time-slots`, editingSlot.value, { headers })
     }
 
     await loadTimeSlots()
@@ -252,13 +259,13 @@ async function saveTimeSlot() {
   }
 }
 
-async function toggleTimeSlot(slot: Record<string, unknown>) {
+async function toggleTimeSlot(slot: TimeSlot) {
   try {
     const token = localStorage.getItem('token')
     const headers = { Authorization: `Bearer ${token}` }
 
     await axios.put(
-      `${API_BASE}/api/admin/time-slots/${slot.id}`,
+      `${API_BASE}/admin/time-slots/${slot.id}`,
       { is_active: !slot.is_active },
       { headers },
     )

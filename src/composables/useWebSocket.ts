@@ -235,12 +235,12 @@ export function useWebSocket(options: WebSocketOptions = {}) {
     }
   }
 
-  const triggerEvent = (event: string, data: Record<string, unknown>) => {
+  const triggerEvent = (event: string, data?: Record<string, unknown>) => {
     const handlers = eventHandlers.get(event)
     if (handlers) {
       handlers.forEach((handler) => {
         try {
-          handler(data)
+          handler(data || {})
         } catch (error) {
           console.error(`Error in event handler for ${event}:`, error)
         }

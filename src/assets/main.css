@@ -3,8 +3,6 @@
 /* Import French-style fonts */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
 
-@import './base.css';
-
 @theme {
   /* French-style color palette */
   --color-cream: #faf9f6;
@@ -20,6 +18,14 @@
   /* Animations */
   --animate-fade-in: fadeIn 0.5s ease-in-out;
   --animate-slide-up: slideUp 0.3s ease-out;
+}
+
+/* Define CSS variables for runtime usage */
+:root {
+  --color-cream: #faf9f6;
+  --color-gold: #d4af37;
+  --color-deep-blue: #1e3a8a;
+  --color-text-gray: #374151;
 }
 
 @keyframes fadeIn {
@@ -45,6 +51,9 @@
 @layer base {
   html {
     font-family: var(--font-family-inter);
+    /* Force light mode background/text to prevent washed out look in dark mode */
+    background-color: var(--color-cream);
+    color: var(--color-text-gray);
   }
 
   body {
@@ -52,6 +61,9 @@
     color: var(--color-text-gray);
     margin: 0;
     padding: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1,
@@ -61,16 +73,23 @@
   h5,
   h6 {
     font-family: var(--font-family-playfair);
+    color: var(--color-deep-blue); /* Ensure headings are dark/blue */
+  }
+
+  /* Reset links */
+  a {
+    text-decoration: none;
+    color: inherit;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-[--color-gold] hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-[#d4af37] hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer flex items-center justify-center;
   }
 
   .btn-secondary {
-    @apply bg-[--color-deep-blue] hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-[#1e3a8a] hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer flex items-center justify-center;
   }
 
   .card {
@@ -78,7 +97,7 @@
   }
 
   .french-border {
-    @apply border-2 border-[--color-gold] rounded-lg;
+    @apply border-2 border-[#d4af37] rounded-lg;
   }
 
   .elegant-shadow {

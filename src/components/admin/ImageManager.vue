@@ -142,7 +142,7 @@ async function loadImages() {
   loading.value = true
   try {
     const token = localStorage.getItem('token')
-    const response = await axios.get(`${API_BASE}/api/upload/images`, {
+    const response = await axios.get(`${API_BASE}/upload/images`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     images.value = response.data.success ? response.data.data : response.data
@@ -177,7 +177,7 @@ async function handleFileSelect(event: Event) {
     }
 
     const token = localStorage.getItem('token')
-    await axios.post(`${API_BASE}/api/upload/images`, formData, {
+    await axios.post(`${API_BASE}/upload/images`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data',
@@ -221,7 +221,7 @@ async function deleteImage(id: string) {
 
   try {
     const token = localStorage.getItem('token')
-    await axios.delete(`${API_BASE}/api/upload/image/${id}`, {
+    await axios.delete(`${API_BASE}/upload/image/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     await loadImages()
@@ -237,7 +237,7 @@ async function deleteSelectedImages() {
 
   try {
     const token = localStorage.getItem('token')
-    await axios.delete(`${API_BASE}/api/upload/images`, {
+    await axios.delete(`${API_BASE}/upload/images`, {
       headers: { Authorization: `Bearer ${token}` },
       data: { ids: selectedImages.value },
     })

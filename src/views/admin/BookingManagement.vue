@@ -42,19 +42,23 @@
           </template>
 
           <template #cell-date="{ row }">
-            {{ formatDate(row.booking_date || row.check_in_date) }}
+            {{ formatDate((row as Booking).booking_date || (row as Booking).check_in_date) }}
           </template>
 
           <template #cell-guest="{ row }">
             <div class="guest-info">
-              <p class="font-medium">{{ row.user_name || '未知' }}</p>
-              <p class="text-xs text-gray-600">{{ row.guest_count }} 人</p>
+              <p class="font-medium">{{ (row as Booking).user_name || '未知' }}</p>
+              <p class="text-xs text-gray-600">{{ (row as Booking).guest_count }} 人</p>
             </div>
           </template>
 
           <template #cell-actions="{ row }">
             <div class="action-buttons">
-              <button @click="viewBooking(row)" class="action-btn view-btn" title="查看详情">
+              <button
+                @click="viewBooking(row as Booking)"
+                class="action-btn view-btn"
+                title="查看详情"
+              >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -70,7 +74,7 @@
                   />
                 </svg>
               </button>
-              <button @click="editBooking(row)" class="action-btn edit-btn" title="编辑">
+              <button @click="editBooking(row as Booking)" class="action-btn edit-btn" title="编辑">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -181,12 +185,26 @@ import { ref, computed, onMounted } from 'vue'
 import { AdminCard, AdminButton, AdminTable, AdminModal } from '@/components/admin'
 import axios from 'axios'
 
+interface Booking {
+  id: string | number
+  type?: 'room' | 'restaurant'
+  status: string
+  booking_date?: string
+  check_in_date?: string
+  user_name?: string
+  user_email?: string
+  user_phone?: string
+  guest_count?: number
+  special_requests?: string
+  total_price?: number | string
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 const loading = ref(false)
 const saving = ref(false)
-const roomBookings = ref<Array<Record<string, unknown>>>([])
-const restaurantBookings = ref<Array<Record<string, unknown>>>([])
+const roomBookings = ref<Booking[]>([])
+const restaurantBookings = ref<Booking[]>([])
 
 const filterType = ref('all')
 const filterStatus = ref('all')
@@ -194,8 +212,8 @@ const filterDate = ref('')
 
 const showDetailModal = ref(false)
 const showEditModal = ref(false)
-const selectedBooking = ref<Record<string, unknown> | null>(null)
-const editingBooking = ref<Record<string, unknown> | null>(null)
+const selectedBooking = ref<Booking | null>(null)
+const editingBooking = ref<Booking | null>(null)
 
 const tableColumns = [
   { key: 'type', label: '类型', width: '80px' },
@@ -210,8 +228,8 @@ const allBookings = computed(() => {
   const room = roomBookings.value.map((b) => ({ ...b, type: 'room' }))
   const restaurant = restaurantBookings.value.map((b) => ({ ...b, type: 'restaurant' }))
   return [...room, ...restaurant].sort((a, b) => {
-    const dateA = new Date(a.booking_date || a.check_in_date)
-    const dateB = new Date(b.booking_date || b.check_in_date)
+    const dateA = new Date(a.booking_date || a.check_in_date || '')
+    const dateB = new Date(b.booking_date || b.check_in_date || '')
     return dateB.getTime() - dateA.getTime()
   })
 })
@@ -250,8 +268,8 @@ async function loadBookings() {
     const headers = { Authorization: `Bearer ${token}` }
 
     const [roomRes, restaurantRes] = await Promise.all([
-      axios.get(`${API_BASE}/api/rooms/bookings`, { headers }),
-      axios.get(`${API_BASE}/api/restaurant/bookings`, { headers }),
+      axios.get(`${API_BASE}/rooms/bookings`, { headers }),
+      axios.get(`${API_BASE}/restaurant/bookings`, { headers }),
     ])
 
     roomBookings.value = roomRes.data.success ? roomRes.data.data : roomRes.data
@@ -272,12 +290,12 @@ function resetFilters() {
   filterDate.value = ''
 }
 
-function viewBooking(booking: Record<string, unknown>) {
+function viewBooking(booking: Booking) {
   selectedBooking.value = booking
   showDetailModal.value = true
 }
 
-function editBooking(booking: Record<string, unknown>) {
+function editBooking(booking: Booking) {
   editingBooking.value = { ...booking }
   showEditModal.value = true
 }
@@ -291,8 +309,8 @@ async function saveBooking() {
     const headers = { Authorization: `Bearer ${token}` }
     const endpoint =
       editingBooking.value.type === 'room'
-        ? `${API_BASE}/api/rooms/bookings/${editingBooking.value.id}`
-        : `${API_BASE}/api/restaurant/bookings/${editingBooking.value.id}`
+        ? `${API_BASE}/rooms/bookings/${editingBooking.value.id}`
+        : `${API_BASE}/restaurant/bookings/${editingBooking.value.id}`
 
     await axios.put(
       endpoint,
@@ -323,7 +341,7 @@ function getStatusText(status: string) {
   return statusMap[status] || status
 }
 
-function formatDate(date: string) {
+function formatDate(date?: string) {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('zh-CN')
 }
