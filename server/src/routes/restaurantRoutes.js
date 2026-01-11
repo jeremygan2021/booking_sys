@@ -7,6 +7,7 @@ import {
   getTimeSlots,
   checkAvailability,
   createRestaurantBooking,
+  createGuestRestaurantBooking,
   getRestaurantBookings,
   getRestaurantBookingById,
   updateRestaurantBooking,
@@ -25,6 +26,9 @@ router.get('/packages/:id', getMealPackageById);
 router.get('/time-slots', getTimeSlots);
 router.get('/availability', checkAvailability);
 router.get('/content', getRestaurantContent);
+
+// 访客预订（无需认证）
+router.post('/bookings/guest', createGuestRestaurantBooking);
 
 // 需要认证的路由
 router.post('/bookings', authenticateToken, createRestaurantBooking);

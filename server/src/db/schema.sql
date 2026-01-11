@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS restaurant_bookings (
     booking_date DATE NOT NULL,
     meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('lunch', 'dinner')),
     time_slot TIME NOT NULL,
+    guest_name VARCHAR(255),
+    guest_phone VARCHAR(20),
     guest_count INTEGER NOT NULL CHECK (guest_count > 0),
     package_id UUID REFERENCES meal_packages(id) ON DELETE SET NULL,
     total_price DECIMAL(10,2) NOT NULL CHECK (total_price >= 0),

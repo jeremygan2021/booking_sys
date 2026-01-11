@@ -165,7 +165,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 
 interface MealPackage {
   id: string
@@ -192,8 +191,6 @@ const emit = defineEmits<{
   cancel: []
   success: [bookingId: string]
 }>()
-
-const authStore = useAuthStore()
 
 const formData = ref({
   guest_count: 2,
@@ -282,21 +279,21 @@ const handleSubmit = async () => {
     submitting.value = true
 
     const bookingData = {
-      user_id: authStore.user?.id || null,
       booking_date: props.bookingDate,
       meal_type: props.mealType,
-      time_slot: props.timeSlot!.start_time,
+      time_slot_id: props.timeSlot!.id,
+      guest_name: formData.value.contact_name,
+      guest_phone: formData.value.contact_phone,
       guest_count: formData.value.guest_count,
       package_id: props.selectedPackage!.id,
       total_price: totalPrice.value,
       special_requests: formData.value.special_requests || null,
     }
 
-    const response = await fetch('/api/restaurant/bookings', {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/restaurant/bookings/guest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}),
       },
       body: JSON.stringify(bookingData),
     })

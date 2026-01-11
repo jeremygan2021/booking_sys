@@ -219,6 +219,100 @@ export const checkAvailability = async (req, res, next) => {
 };
 
 /**
+ * 创建访客餐厅预订（无需认证）
+ */
+export const createGuestRestaurantBooking = async (req, res, next) => {
+  try {
+    const {
+      booking_date,
+      meal_type,
+      time_slot_id,
+      guest_name,
+      guest_phone,
+      guest_count,
+      package_id,
+      total_price,
+      special_requests
+    } = req.body;
+    
+    // 验证必填字段
+    if (!booking_date || !meal_type || !time_slot_id || !guest_name || !guest_phone || !guest_count || !total_price) {
+      return res.status(400).json({
+        success: false,
+        error: { message: '缺少必填字段' }
+      });
+    }
+    
+    // 验证手机号格式
+    if (!/^[0-9]{11}$/.test(guest_phone)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: '请输入有效的11位手机号码' }
+      });
+    }
+    
+    // 检查时间段是否存在且可用
+    const timeSlotResult = await pool.query(
+      'SELECT * FROM time_slots WHERE id = $1 AND meal_type = $2 AND is_active = true',
+      [time_slot_id, meal_type]
+    );
+    
+    if (timeSlotResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: '选择的时间段不可用' }
+      });
+    }
+    
+    const timeSlotConfig = timeSlotResult.rows[0];
+    
+    // 检查该时间段的容量
+    const bookingsResult = await pool.query(
+      `SELECT COALESCE(SUM(guest_count), 0) as total_guests
+       FROM restaurant_bookings
+       WHERE booking_date = $1 AND meal_type = $2 AND time_slot = $3 AND status != 'cancelled'`,
+      [booking_date, meal_type, timeSlotConfig.start_time]
+    );
+    
+    const currentGuests = parseInt(bookingsResult.rows[0].total_guests);
+    const availableCapacity = timeSlotConfig.max_capacity - currentGuests;
+    
+    if (guest_count > availableCapacity) {
+      return res.status(400).json({
+        success: false,
+        error: { 
+          message: '该时间段容量不足',
+          available_capacity: availableCapacity
+        }
+      });
+    }
+    
+    // 创建预订（不关联用户）
+    const result = await pool.query(
+      `INSERT INTO restaurant_bookings 
+       (booking_date, meal_type, time_slot, guest_name, guest_phone, guest_count, package_id, total_price, special_requests, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
+       RETURNING *`,
+      [booking_date, meal_type, timeSlotConfig.start_time, guest_name, guest_phone, guest_count, package_id, total_price, special_requests]
+    );
+    
+    const booking = result.rows[0];
+
+    // Notify via WebSocket
+    websocketService.notifyBookingCreated(booking, 'restaurant');
+    websocketService.notifyAvailabilityChanged(booking_date, 'restaurant');
+    
+    res.status(201).json({
+      success: true,
+      data: booking,
+      message: '预订创建成功'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * 创建餐厅预订
  */
 export const createRestaurantBooking = async (req, res, next) => {
