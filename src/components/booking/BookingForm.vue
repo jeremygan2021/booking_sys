@@ -304,8 +304,18 @@ const fetchRoomType = async () => {
 
 // 日期选择回调
 const onDatesSelected = (checkIn: string, checkOut: string) => {
+  // 验证日期
+  const checkInDate = new Date(checkIn)
+  const checkOutDate = new Date(checkOut)
+
+  if (checkOutDate <= checkInDate) {
+    error.value = '退房日期必须晚于入住日期'
+    return
+  }
+
   form.value.checkInDate = checkIn
   form.value.checkOutDate = checkOut
+  error.value = '' // 清除错误
 }
 
 // 格式化日期
@@ -362,8 +372,8 @@ const submitBooking = async () => {
       error.value = data.error?.message || '预订失败，请重试'
     }
   } catch (err) {
-    error.value = '网络错误，请稍后重试'
     console.error('Error creating booking:', err)
+    error.value = '网络错误，请稍后重试'
   } finally {
     submitting.value = false
   }

@@ -346,6 +346,30 @@ export const createGuestRoomBooking = async (req, res, next) => {
       });
     }
 
+    // 验证日期
+    const checkInDate = new Date(check_in_date);
+    const checkOutDate = new Date(check_out_date);
+    
+    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_DATE',
+          message: '无效的日期格式',
+        },
+      });
+    }
+    
+    if (checkOutDate <= checkInDate) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_DATE_RANGE',
+          message: '退房日期必须晚于入住日期',
+        },
+      });
+    }
+
     // 检查房间是否可用
     const availabilityCheck = await pool.query(
       `SELECT r.id, rt.base_price, rt.max_occupancy
