@@ -58,18 +58,6 @@ router.put('/types/:id', authenticate, requireAdmin, updateRoomType);
 // 删除房间类型 (管理员)
 router.delete('/types/:id', authenticate, requireAdmin, deleteRoomType);
 
-// ========== 房间路由 ==========
-// Room routes
-
-// 获取所有房间 (公开)
-router.get('/', getRooms);
-
-// 获取单个房间 (公开)
-router.get('/:id', getRoomById);
-
-// 检查房间可用性 (公开)
-router.get('/availability/check', checkRoomAvailability);
-
 // ========== 预订路由 ==========
 // Booking routes
 
@@ -87,5 +75,18 @@ router.get('/bookings/:id', authenticate, getRoomBookingById);
 
 // 更新预订状态 (需要认证)
 router.put('/bookings/:id/status', authenticate, updateRoomBookingStatus);
+
+// ========== 房间路由 ==========
+// Room routes
+
+// 获取所有房间 (公开)
+router.get('/', getRooms);
+
+// 检查房间可用性 (公开)
+router.get('/availability/check', checkRoomAvailability);
+
+// 获取单个房间 (公开)
+// 注意：这个路由必须放在最后，否则会拦截其他以 / 开头的路由
+router.get('/:id', getRoomById);
 
 export default router;

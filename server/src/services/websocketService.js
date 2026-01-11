@@ -52,22 +52,24 @@ class WebSocketService {
   handleAuth(ws, token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      ws.userId = decoded.userId;
+      // Token payload uses 'id', not 'userId'
+      const userId = decoded.id || decoded.userId;
+      ws.userId = userId;
       ws.isAuthenticated = true;
 
       // Add to clients map
-      if (!this.clients.has(decoded.userId)) {
-        this.clients.set(decoded.userId, new Set());
+      if (!this.clients.has(userId)) {
+        this.clients.set(userId, new Set());
       }
-      this.clients.get(decoded.userId).add(ws);
+      this.clients.get(userId).add(ws);
 
       ws.send(JSON.stringify({ 
         type: 'auth_success', 
-        userId: decoded.userId,
+        userId: userId,
         timestamp: Date.now()
       }));
 
-      console.log(`User ${decoded.userId} authenticated via WebSocket`);
+      console.log(`User ${userId} authenticated via WebSocket`);
     } catch (error) {
       ws.send(JSON.stringify({ 
         type: 'auth_error', 
