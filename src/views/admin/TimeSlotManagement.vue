@@ -237,7 +237,7 @@ async function saveTimeSlot() {
 
   saving.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     const headers = { Authorization: `Bearer ${token}` }
 
     if (isEditing.value) {
@@ -261,7 +261,7 @@ async function saveTimeSlot() {
 
 async function toggleTimeSlot(slot: TimeSlot) {
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     const headers = { Authorization: `Bearer ${token}` }
 
     await axios.put(

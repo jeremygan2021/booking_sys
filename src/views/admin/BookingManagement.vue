@@ -264,7 +264,7 @@ onMounted(() => {
 async function loadBookings() {
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     const headers = { Authorization: `Bearer ${token}` }
 
     const [roomRes, restaurantRes] = await Promise.all([

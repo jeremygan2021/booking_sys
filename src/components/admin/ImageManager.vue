@@ -141,7 +141,7 @@ onMounted(() => {
 async function loadImages() {
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     const response = await axios.get(`${API_BASE}/upload/images`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -176,7 +176,7 @@ async function handleFileSelect(event: Event) {
       }
     }
 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     await axios.post(`${API_BASE}/upload/images`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -220,7 +220,7 @@ async function deleteImage(id: string) {
   if (!confirm('确定要删除这张图片吗？')) return
 
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     await axios.delete(`${API_BASE}/upload/image/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -236,7 +236,7 @@ async function deleteSelectedImages() {
   if (!confirm(`确定要删除选中的 ${selectedImages.value.length} 张图片吗？`)) return
 
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     await axios.delete(`${API_BASE}/upload/images`, {
       headers: { Authorization: `Bearer ${token}` },
       data: { ids: selectedImages.value },

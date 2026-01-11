@@ -302,7 +302,7 @@ const loadBookings = async () => {
       `${import.meta.env.VITE_API_BASE_URL}/rooms/bookings?start_date=${startDate}&end_date=${endDate}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
         },
       },
     )
@@ -317,7 +317,7 @@ const loadBookings = async () => {
       `${import.meta.env.VITE_API_BASE_URL}/restaurant/bookings?start_date=${startDate}&end_date=${endDate}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
         },
       },
     )
