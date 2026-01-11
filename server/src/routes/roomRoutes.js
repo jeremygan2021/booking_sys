@@ -60,30 +60,31 @@ router.delete('/types/:id', authenticate, requireAdmin, deleteRoomType);
 
 // ========== 预订路由 ==========
 // Booking routes
-
-// 创建房间预订 (需要认证)
-router.post('/bookings', authenticate, bookingValidation, createRoomBooking);
+// 注意：具体路径的路由必须放在参数路由之前
 
 // 获取用户的预订 (需要认证)
 router.get('/bookings/my', authenticate, getUserRoomBookings);
 
-// 获取所有预订 (管理员)
-router.get('/bookings/all', authenticate, requireAdmin, getAllRoomBookings);
+// 获取所有预订 (管理员) - 支持查询参数过滤
+router.get('/bookings', authenticate, requireAdmin, getAllRoomBookings);
 
-// 获取单个预订详情 (需要认证)
-router.get('/bookings/:id', authenticate, getRoomBookingById);
+// 创建房间预订 (需要认证)
+router.post('/bookings', authenticate, bookingValidation, createRoomBooking);
 
 // 更新预订状态 (需要认证)
 router.put('/bookings/:id/status', authenticate, updateRoomBookingStatus);
 
+// 获取单个预订详情 (需要认证)
+router.get('/bookings/:id', authenticate, getRoomBookingById);
+
 // ========== 房间路由 ==========
 // Room routes
 
+// 检查房间可用性 (公开) - 必须在 /:id 之前
+router.get('/availability/check', checkRoomAvailability);
+
 // 获取所有房间 (公开)
 router.get('/', getRooms);
-
-// 检查房间可用性 (公开)
-router.get('/availability/check', checkRoomAvailability);
 
 // 获取单个房间 (公开)
 // 注意：这个路由必须放在最后，否则会拦截其他以 / 开头的路由
