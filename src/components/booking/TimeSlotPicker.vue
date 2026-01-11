@@ -16,11 +16,25 @@
     <!-- 用餐类型切换 -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-3">用餐时段</label>
-      <div class="flex gap-4">
+      <div class="grid grid-cols-3 gap-3">
+        <button
+          @click="selectedMealType = 'breakfast'"
+          :class="[
+            'py-3 px-4 rounded-lg border-2 transition-all',
+            selectedMealType === 'breakfast'
+              ? 'border-gold bg-gold/10 text-gold font-semibold'
+              : 'border-gray-200 hover:border-gray-300',
+          ]"
+        >
+          <div class="flex items-center justify-center gap-2">
+            <span class="text-2xl">🌅</span>
+            <span>早餐</span>
+          </div>
+        </button>
         <button
           @click="selectedMealType = 'lunch'"
           :class="[
-            'flex-1 py-3 px-6 rounded-lg border-2 transition-all',
+            'py-3 px-4 rounded-lg border-2 transition-all',
             selectedMealType === 'lunch'
               ? 'border-gold bg-gold/10 text-gold font-semibold'
               : 'border-gray-200 hover:border-gray-300',
@@ -34,7 +48,7 @@
         <button
           @click="selectedMealType = 'dinner'"
           :class="[
-            'flex-1 py-3 px-6 rounded-lg border-2 transition-all',
+            'py-3 px-4 rounded-lg border-2 transition-all',
             selectedMealType === 'dinner'
               ? 'border-gold bg-gold/10 text-gold font-semibold'
               : 'border-gray-200 hover:border-gray-300',
@@ -120,7 +134,16 @@
       <h4 class="font-semibold text-blue-900 mb-2">已选择</h4>
       <div class="text-sm text-blue-800">
         <p>日期: {{ formatDate(selectedDate) }}</p>
-        <p>时段: {{ selectedMealType === 'lunch' ? '午餐' : '晚餐' }}</p>
+        <p>
+          时段:
+          {{
+            selectedMealType === 'breakfast'
+              ? '早餐'
+              : selectedMealType === 'lunch'
+                ? '午餐'
+                : '晚餐'
+          }}
+        </p>
         <p>
           时间: {{ formatTime(selectedTimeSlot.start_time) }} -
           {{ formatTime(selectedTimeSlot.end_time) }}
@@ -145,18 +168,18 @@ interface TimeSlot {
 
 const emit = defineEmits<{
   'update:date': [value: string]
-  'update:mealType': [value: 'lunch' | 'dinner']
+  'update:mealType': [value: 'breakfast' | 'lunch' | 'dinner']
   'update:timeSlot': [value: TimeSlot | null]
 }>()
 
 const props = defineProps<{
   date?: string
-  mealType?: 'lunch' | 'dinner'
+  mealType?: 'breakfast' | 'lunch' | 'dinner'
   timeSlot?: TimeSlot | null
 }>()
 
 const selectedDate = ref(props.date || '')
-const selectedMealType = ref<'lunch' | 'dinner'>(props.mealType || 'lunch')
+const selectedMealType = ref<'breakfast' | 'lunch' | 'dinner'>(props.mealType || 'lunch')
 const selectedTimeSlot = ref<TimeSlot | null>(props.timeSlot || null)
 const availableSlots = ref<TimeSlot[]>([])
 const loading = ref(false)

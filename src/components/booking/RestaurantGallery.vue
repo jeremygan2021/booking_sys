@@ -137,7 +137,18 @@ const content = ref<RestaurantContent>({
 })
 const currentImageIndex = ref(0)
 
-const images = computed(() => content.value.images || [])
+const images = computed(() => {
+  if (!content.value.images || !Array.isArray(content.value.images)) {
+    return []
+  }
+  // 图片在服务器根路径，不在 /api 路径下
+  const serverUrl =
+    import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'
+  return content.value.images.map((img) => {
+    if (img.startsWith('http')) return img
+    return `${serverUrl}${img}`
+  })
+})
 const currentImage = computed(() => images.value[currentImageIndex.value])
 const features = computed(
   () =>

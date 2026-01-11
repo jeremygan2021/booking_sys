@@ -110,7 +110,7 @@ interface MealPackage {
   price: number
   cuisine_id: string
   cuisine_name: string
-  meal_type: 'lunch' | 'dinner'
+  meal_type: 'breakfast' | 'lunch' | 'dinner'
   max_guests: number
 }
 
@@ -130,7 +130,7 @@ const steps = ['选择菜单', '选择时间', '填写信息']
 const currentStep = ref(1)
 
 const bookingData = ref<{
-  mealType: 'lunch' | 'dinner'
+  mealType: 'breakfast' | 'lunch' | 'dinner'
   selectedPackage: MealPackage | null
   date: string
   timeSlot: TimeSlot | null

@@ -172,6 +172,26 @@ const navItems = [
       ),
   },
   {
+    path: '/admin/menu',
+    label: '菜单管理',
+    icon: () =>
+      h(
+        'svg',
+        {
+          class: 'w-5 h-5',
+          fill: 'none',
+          stroke: 'currentColor',
+          viewBox: '0 0 24 24',
+        },
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          'stroke-width': '2',
+          d: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+        }),
+      ),
+  },
+  {
     path: '/admin/timeslots',
     label: '时间配置',
     icon: () =>
@@ -222,7 +242,8 @@ const currentPageDescription = computed(() => {
   const descriptions: Record<string, string> = {
     'admin-content': '管理房间和餐厅的内容信息',
     'admin-bookings': '查看和管理所有预订记录',
-    'admin-timeslots': '配置午餐和晚餐的时间段',
+    'admin-menu': '管理餐厅菜系和套餐',
+    'admin-timeslots': '配置早餐、午餐和晚餐的时间段',
     'admin-calendar': '统一查看预订日历',
   }
   return descriptions[route.name as string] || '欢迎使用管理系统'

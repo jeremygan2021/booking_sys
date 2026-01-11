@@ -24,19 +24,22 @@ export const getRestaurantContent = async (req, res) => {
 // Update restaurant content
 export const updateRestaurantContent = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, images } = req.body;
 
     if (!content) {
       return res.status(400).json({ error: '内容不能为空' });
     }
 
+    // 确保images是数组格式
+    const imagesArray = Array.isArray(images) ? images : [];
+
     const result = await pool.query(
-      `INSERT INTO content_sections (section_key, content, updated_at)
-       VALUES ('restaurant_intro', $1, CURRENT_TIMESTAMP)
+      `INSERT INTO content_sections (section_key, content, images, updated_at)
+       VALUES ('restaurant_intro', $1, $2::jsonb, CURRENT_TIMESTAMP)
        ON CONFLICT (section_key)
-       DO UPDATE SET content = $1, updated_at = CURRENT_TIMESTAMP
+       DO UPDATE SET content = $1, images = $2::jsonb, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [content]
+      [content, JSON.stringify(imagesArray)]
     );
 
     res.json(result.rows[0]);
@@ -92,7 +95,8 @@ export const updateCuisine = async (req, res) => {
       `UPDATE cuisines
        SET name = COALESCE($1, name),
            description = COALESCE($2, description),
-           image_url = COALESCE($3, image_url)
+           image_url = COALESCE($3, image_url),
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $4
        RETURNING *`,
       [name, description, image_url, id]
@@ -149,18 +153,24 @@ export const updateRoomType = async (req, res) => {
     const { id } = req.params;
     const { name, description, base_price, max_occupancy, amenities, images } = req.body;
 
+    console.log('Updating room type:', { id, name, images }); // 调试日志
+
+    // 确保images是数组格式
+    const imagesArray = Array.isArray(images) ? images : (images ? [images] : null);
+    const amenitiesArray = Array.isArray(amenities) ? amenities : (amenities ? [amenities] : null);
+
     const result = await pool.query(
       `UPDATE room_types
        SET name = COALESCE($1, name),
            description = COALESCE($2, description),
            base_price = COALESCE($3, base_price),
            max_occupancy = COALESCE($4, max_occupancy),
-           amenities = COALESCE($5, amenities),
-           images = COALESCE($6, images),
+           amenities = COALESCE($5::jsonb, amenities),
+           images = COALESCE($6::jsonb, images),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $7
        RETURNING *`,
-      [name, description, base_price, max_occupancy, amenities, images, id]
+      [name, description, base_price, max_occupancy, JSON.stringify(amenitiesArray), JSON.stringify(imagesArray), id]
     );
 
     if (result.rows.length === 0) {
@@ -170,6 +180,7 @@ export const updateRoomType = async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Update room type error:', error);
-    res.status(500).json({ error: '更新房间类型失败' });
+    console.error('Error details:', error.message); // 详细错误信息
+    res.status(500).json({ error: '更新房间类型失败', details: error.message });
   }
 };

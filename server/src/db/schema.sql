@@ -63,7 +63,8 @@ CREATE TABLE IF NOT EXISTS cuisines (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     image_url VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 套餐表
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS meal_packages (
     description TEXT,
     price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
     cuisine_id UUID REFERENCES cuisines(id) ON DELETE SET NULL,
-    meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('lunch', 'dinner')),
+    meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('breakfast', 'lunch', 'dinner')),
     max_guests INTEGER NOT NULL CHECK (max_guests > 0),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -84,7 +85,7 @@ CREATE TABLE IF NOT EXISTS restaurant_bookings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     booking_date DATE NOT NULL,
-    meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('lunch', 'dinner')),
+    meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('breakfast', 'lunch', 'dinner')),
     time_slot TIME NOT NULL,
     guest_name VARCHAR(255),
     guest_phone VARCHAR(20),
@@ -100,7 +101,7 @@ CREATE TABLE IF NOT EXISTS restaurant_bookings (
 -- 时间段配置表
 CREATE TABLE IF NOT EXISTS time_slots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('lunch', 'dinner')),
+    meal_type VARCHAR(20) NOT NULL CHECK (meal_type IN ('breakfast', 'lunch', 'dinner')),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     max_capacity INTEGER NOT NULL CHECK (max_capacity > 0),
@@ -173,4 +174,7 @@ CREATE TRIGGER update_restaurant_bookings_updated_at BEFORE UPDATE ON restaurant
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_content_sections_updated_at BEFORE UPDATE ON content_sections
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_cuisines_updated_at BEFORE UPDATE ON cuisines
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

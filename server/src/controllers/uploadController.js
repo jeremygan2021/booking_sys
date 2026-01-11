@@ -19,9 +19,13 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
+    // 使用时间戳和随机数生成唯一文件名，避免中文乱码
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    // 使用 Buffer 正确处理中文文件名
+    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5.-]/g, '_');
+    cb(null, `${uniqueSuffix}-${sanitizedName}`);
   },
 });
 
@@ -56,7 +60,9 @@ export const uploadImage = async (req, res) => {
       return res.status(400).json({ error: '没有上传文件' });
     }
 
-    const { filename, originalname, mimetype, size } = req.file;
+    const { filename, mimetype, size } = req.file;
+    // 正确处理中文文件名
+    const originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
     const filePath = `/uploads/${filename}`;
     const userId = req.user?.id || null;
 
@@ -92,7 +98,9 @@ export const uploadMultipleImages = async (req, res) => {
     const uploadedFiles = [];
 
     for (const file of req.files) {
-      const { filename, originalname, mimetype, size } = file;
+      const { filename, mimetype, size } = file;
+      // 正确处理中文文件名
+      const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
       const filePath = `/uploads/${filename}`;
 
       const result = await pool.query(

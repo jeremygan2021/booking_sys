@@ -206,7 +206,15 @@ const filteredRooms = computed(() => {
 // 获取房间图片
 const getRoomImage = (room: RoomType) => {
   if (room.images && Array.isArray(room.images) && room.images.length > 0) {
-    return room.images[0]
+    const imagePath = room.images[0]
+    // 如果是完整URL，直接返回
+    if (imagePath.startsWith('http')) {
+      return imagePath
+    }
+    // 图片在服务器根路径，不在 /api 路径下
+    const serverUrl =
+      import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'
+    return `${serverUrl}${imagePath}`
   }
   return 'https://via.placeholder.com/400x300?text=Room+Image'
 }

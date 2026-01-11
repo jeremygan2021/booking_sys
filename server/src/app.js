@@ -17,8 +17,10 @@ const __dirname = path.dirname(__filename);
 // 创建 Express 应用
 const app = express();
 
-// 安全配置
-app.use(helmet());
+// 安全配置 - 配置helmet以允许跨域图片加载
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // CORS 配置
 app.use(cors());

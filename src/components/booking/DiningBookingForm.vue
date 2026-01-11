@@ -93,7 +93,9 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">时段:</span>
-            <span class="font-medium">{{ mealType === 'lunch' ? '午餐' : '晚餐' }}</span>
+            <span class="font-medium">{{
+              mealType === 'breakfast' ? '早餐' : mealType === 'lunch' ? '午餐' : '晚餐'
+            }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">时间:</span>
@@ -183,7 +185,7 @@ interface TimeSlot {
 const props = defineProps<{
   selectedPackage: MealPackage | null
   bookingDate: string
-  mealType: 'lunch' | 'dinner'
+  mealType: 'breakfast' | 'lunch' | 'dinner'
   timeSlot: TimeSlot | null
 }>()
 

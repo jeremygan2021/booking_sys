@@ -66,7 +66,29 @@
           ></div>
         </div>
 
-        <div class="preview-section">
+        <label class="form-label mt-4">餐厅图片</label>
+        <div class="image-selector">
+          <div v-if="restaurantImages && restaurantImages.length > 0" class="selected-images">
+            <div v-for="(img, index) in restaurantImages" :key="index" class="selected-image-item">
+              <img :src="getFullImageUrl(img)" :alt="`餐厅图片 ${index + 1}`" />
+              <button @click="removeRestaurantImage(index)" class="remove-image-btn" type="button">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <AdminButton variant="secondary" @click="openImagePicker('restaurant')" type="button">
+            选择图片
+          </AdminButton>
+        </div>
+
+        <div class="preview-section mt-4">
           <h4 class="preview-title">实时预览</h4>
           <div class="preview-content" v-html="restaurantContent"></div>
         </div>
@@ -138,6 +160,32 @@
 
         <label class="form-label mt-4">最大入住人数</label>
         <input v-model.number="editingRoom.max_occupancy" type="number" class="form-input" />
+
+        <label class="form-label mt-4">房间图片</label>
+        <div class="image-selector">
+          <div v-if="editingRoom.images && editingRoom.images.length > 0" class="selected-images">
+            <div
+              v-for="(img, index) in editingRoom.images"
+              :key="index"
+              class="selected-image-item"
+            >
+              <img :src="getFullImageUrl(img)" :alt="`房间图片 ${index + 1}`" />
+              <button @click="removeRoomImage(index)" class="remove-image-btn" type="button">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <AdminButton variant="secondary" @click="openImagePicker('room')" type="button">
+            选择图片
+          </AdminButton>
+        </div>
       </div>
 
       <template #footer>
@@ -147,18 +195,79 @@
     </AdminModal>
 
     <!-- Add/Edit Cuisine Modal -->
-    <AdminModal v-model="showAddCuisineModal" title="添加菜系">
+    <AdminModal v-model="showAddCuisineModal" :title="editingCuisineId ? '编辑菜系' : '添加菜系'">
       <div class="form-group">
         <label class="form-label">菜系名称</label>
         <input v-model="newCuisine.name" type="text" class="form-input" />
 
         <label class="form-label mt-4">菜系描述</label>
         <textarea v-model="newCuisine.description" rows="3" class="form-input"></textarea>
+
+        <label class="form-label mt-4">菜系封面</label>
+        <div class="image-selector">
+          <div v-if="newCuisine.image_url" class="selected-images">
+            <div class="selected-image-item">
+              <img :src="getFullImageUrl(newCuisine.image_url)" alt="菜系封面" />
+              <button @click="newCuisine.image_url = ''" class="remove-image-btn" type="button">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <AdminButton variant="secondary" @click="openImagePicker('cuisine')" type="button">
+            选择封面图片
+          </AdminButton>
+        </div>
       </div>
 
       <template #footer>
-        <AdminButton variant="secondary" @click="showAddCuisineModal = false">取消</AdminButton>
-        <AdminButton variant="primary" @click="addCuisine" :loading="saving">添加</AdminButton>
+        <AdminButton variant="secondary" @click="closeAddCuisineModal">取消</AdminButton>
+        <AdminButton variant="primary" @click="saveCuisine" :loading="saving">
+          {{ editingCuisineId ? '保存' : '添加' }}
+        </AdminButton>
+      </template>
+    </AdminModal>
+
+    <!-- Image Picker Modal -->
+    <AdminModal v-model="showImagePicker" title="选择图片" size="large">
+      <div class="image-picker-content">
+        <div v-if="loadingImages" class="text-center py-8">
+          <div class="loading-spinner"></div>
+          <p class="mt-2">加载图片中...</p>
+        </div>
+        <div v-else-if="availableImages.length === 0" class="text-center py-8">
+          <p class="text-gray-600">暂无可用图片，请先上传图片</p>
+        </div>
+        <div v-else class="images-picker-grid">
+          <div
+            v-for="image in availableImages"
+            :key="image.id"
+            :class="['picker-image-item', { selected: isImageSelected(image.file_path) }]"
+            @click="selectImage(image.file_path)"
+          >
+            <img :src="getFullImageUrl(image.file_path)" :alt="image.original_name" />
+            <div v-if="isImageSelected(image.file_path)" class="selection-check">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <AdminButton variant="secondary" @click="showImagePicker = false">取消</AdminButton>
+        <AdminButton variant="primary" @click="confirmImageSelection">确认选择</AdminButton>
       </template>
     </AdminModal>
   </div>
@@ -182,6 +291,7 @@ interface Cuisine {
   id: string | number
   name: string
   description?: string
+  image_url?: string
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
@@ -204,11 +314,21 @@ const editingRoom = ref<RoomType | null>(null)
 // Restaurant Content
 const restaurantContent = ref('<p>欢迎来到爱云香舍餐厅...</p>')
 const originalRestaurantContent = ref('')
+const restaurantImages = ref<string[]>([])
+const originalRestaurantImages = ref<string[]>([])
 
 // Cuisines
 const cuisines = ref<Cuisine[]>([])
 const showAddCuisineModal = ref(false)
-const newCuisine = ref({ name: '', description: '' })
+const editingCuisineId = ref<string | number | null>(null)
+const newCuisine = ref({ name: '', description: '', image_url: '' })
+
+// Image Picker
+const showImagePicker = ref(false)
+const loadingImages = ref(false)
+const availableImages = ref<Array<{ id: string; file_path: string; original_name: string }>>([])
+const selectedImagePath = ref<string>('')
+const imagePickerTarget = ref<'room' | 'cuisine' | 'restaurant'>('room')
 
 // Editor Actions
 const editorActions = [
@@ -286,17 +406,38 @@ async function loadCuisines() {
 async function loadRestaurantContent() {
   try {
     const response = await axios.get(`${API_BASE}/content/restaurant`)
-    if (response.data && response.data.content) {
-      restaurantContent.value = response.data.content
-      originalRestaurantContent.value = response.data.content
+    if (response.data) {
+      const data = response.data
+      restaurantContent.value = data.content || '<p>欢迎来到爱云香舍餐厅...</p>'
+      originalRestaurantContent.value = data.content || '<p>欢迎来到爱云香舍餐厅...</p>'
+      restaurantImages.value = Array.isArray(data.images) ? data.images : []
+      originalRestaurantImages.value = Array.isArray(data.images) ? [...data.images] : []
     }
   } catch (error) {
     console.error('Failed to load restaurant content:', error)
   }
 }
 
+async function loadAvailableImages() {
+  loadingImages.value = true
+  try {
+    const token = localStorage.getItem('auth_token')
+    const response = await axios.get(`${API_BASE}/upload/images`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    availableImages.value = response.data.success ? response.data.data : response.data
+  } catch (error) {
+    console.error('Failed to load images:', error)
+  } finally {
+    loadingImages.value = false
+  }
+}
+
 function editRoomType(room: RoomType) {
-  editingRoom.value = { ...room }
+  editingRoom.value = {
+    ...room,
+    images: Array.isArray(room.images) ? room.images : [],
+  }
   showRoomModal.value = true
 }
 
@@ -305,15 +446,36 @@ async function saveRoomType() {
 
   saving.value = true
   try {
-    await axios.put(`${API_BASE}/content/room-types/${editingRoom.value.id}`, editingRoom.value)
+    const token = localStorage.getItem('auth_token')
+
+    // 确保数据格式正确
+    const roomData = {
+      ...editingRoom.value,
+      images: Array.isArray(editingRoom.value.images) ? editingRoom.value.images : [],
+      amenities: Array.isArray(editingRoom.value.amenities) ? editingRoom.value.amenities : [],
+    }
+
+    console.log('Saving room type:', roomData) // 调试日志
+
+    await axios.put(`${API_BASE}/content/room-types/${editingRoom.value.id}`, roomData, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
     await loadRoomTypes()
     showRoomModal.value = false
     alert('房间类型已更新')
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to save room type:', error)
-    alert('保存失败，请重试')
+    const err = error as { response?: { data?: { details?: string; error?: string } } }
+    const errorMsg = err.response?.data?.details || err.response?.data?.error || '保存失败，请重试'
+    alert(errorMsg)
   } finally {
     saving.value = false
+  }
+}
+
+function removeRoomImage(index: number) {
+  if (editingRoom.value && editingRoom.value.images) {
+    editingRoom.value.images.splice(index, 1)
   }
 }
 
@@ -333,6 +495,7 @@ function handleEditorInput(event: Event) {
 
 function resetContent() {
   restaurantContent.value = originalRestaurantContent.value
+  restaurantImages.value = [...originalRestaurantImages.value]
   if (editorRef.value) {
     editorRef.value.innerHTML = originalRestaurantContent.value
   }
@@ -341,10 +504,19 @@ function resetContent() {
 async function saveRestaurantContent() {
   saving.value = true
   try {
-    await axios.put(`${API_BASE}/content/restaurant`, {
-      content: restaurantContent.value,
-    })
+    const token = localStorage.getItem('auth_token')
+    await axios.put(
+      `${API_BASE}/content/restaurant`,
+      {
+        content: restaurantContent.value,
+        images: restaurantImages.value,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
     originalRestaurantContent.value = restaurantContent.value
+    originalRestaurantImages.value = [...restaurantImages.value]
     alert('餐厅内容已保存')
   } catch (error) {
     console.error('Failed to save restaurant content:', error)
@@ -355,11 +527,22 @@ async function saveRestaurantContent() {
 }
 
 function editCuisine(cuisine: Cuisine) {
-  newCuisine.value = { ...cuisine } as { name: string; description: string }
+  editingCuisineId.value = cuisine.id
+  newCuisine.value = {
+    name: cuisine.name,
+    description: cuisine.description || '',
+    image_url: cuisine.image_url || '',
+  }
   showAddCuisineModal.value = true
 }
 
-async function addCuisine() {
+function closeAddCuisineModal() {
+  showAddCuisineModal.value = false
+  editingCuisineId.value = null
+  newCuisine.value = { name: '', description: '', image_url: '' }
+}
+
+async function saveCuisine() {
   if (!newCuisine.value.name) {
     alert('请输入菜系名称')
     return
@@ -367,14 +550,29 @@ async function addCuisine() {
 
   saving.value = true
   try {
-    await axios.post(`${API_BASE}/restaurant/cuisines`, newCuisine.value)
+    const token = localStorage.getItem('auth_token')
+    if (editingCuisineId.value) {
+      // 更新菜系
+      await axios.put(
+        `${API_BASE}/restaurant/cuisines/${editingCuisineId.value}`,
+        newCuisine.value,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
+      alert('菜系已更新')
+    } else {
+      // 添加菜系
+      await axios.post(`${API_BASE}/restaurant/cuisines`, newCuisine.value, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      alert('菜系已添加')
+    }
     await loadCuisines()
-    showAddCuisineModal.value = false
-    newCuisine.value = { name: '', description: '' }
-    alert('菜系已添加')
+    closeAddCuisineModal()
   } catch (error) {
-    console.error('Failed to add cuisine:', error)
-    alert('添加失败，请重试')
+    console.error('Failed to save cuisine:', error)
+    alert('保存失败，请重试')
   } finally {
     saving.value = false
   }
@@ -384,13 +582,65 @@ async function deleteCuisine(id: string | number) {
   if (!confirm('确定要删除这个菜系吗？')) return
 
   try {
-    await axios.delete(`${API_BASE}/restaurant/cuisines/${id}`)
+    const token = localStorage.getItem('auth_token')
+    await axios.delete(`${API_BASE}/restaurant/cuisines/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
     await loadCuisines()
     alert('菜系已删除')
   } catch (error) {
     console.error('Failed to delete cuisine:', error)
     alert('删除失败，请重试')
   }
+}
+
+// Image Picker Functions
+async function openImagePicker(target: 'room' | 'cuisine' | 'restaurant') {
+  imagePickerTarget.value = target
+  selectedImagePath.value = ''
+  showImagePicker.value = true
+  await loadAvailableImages()
+}
+
+function isImageSelected(path: string) {
+  return selectedImagePath.value === path
+}
+
+function selectImage(path: string) {
+  selectedImagePath.value = path
+}
+
+function confirmImageSelection() {
+  if (!selectedImagePath.value) {
+    alert('请选择一张图片')
+    return
+  }
+
+  if (imagePickerTarget.value === 'room' && editingRoom.value) {
+    if (!editingRoom.value.images) {
+      editingRoom.value.images = []
+    }
+    editingRoom.value.images.push(selectedImagePath.value)
+  } else if (imagePickerTarget.value === 'cuisine') {
+    newCuisine.value.image_url = selectedImagePath.value
+  } else if (imagePickerTarget.value === 'restaurant') {
+    restaurantImages.value.push(selectedImagePath.value)
+  }
+
+  showImagePicker.value = false
+  selectedImagePath.value = ''
+}
+
+function removeRestaurantImage(index: number) {
+  restaurantImages.value.splice(index, 1)
+}
+
+function getFullImageUrl(path: string) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  // 图片在服务器根路径，不在 /api 路径下
+  const serverUrl = API_BASE.replace('/api', '')
+  return `${serverUrl}${path}`
 }
 </script>
 
@@ -640,5 +890,113 @@ async function deleteCuisine(id: string | number) {
 
 .mt-6 {
   margin-top: 1.5rem;
+}
+
+/* Image Selector */
+.image-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.selected-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.selected-image-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+}
+
+.selected-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  padding: 0.25rem;
+  background-color: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-image-btn:hover {
+  background-color: rgb(220, 38, 38);
+}
+
+/* Image Picker Modal */
+.image-picker-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.images-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.picker-image-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.picker-image-item:hover {
+  border-color: var(--color-deep-blue);
+  transform: scale(1.05);
+}
+
+.picker-image-item.selected {
+  border-color: var(--color-deep-blue);
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+}
+
+.picker-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.selection-check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: var(--color-deep-blue);
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid #e5e7eb;
+  border-top-color: var(--color-deep-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

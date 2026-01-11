@@ -5,11 +5,22 @@
     <!-- 用餐类型选择 -->
     <div class="mb-8">
       <label class="block text-sm font-medium text-gray-700 mb-3">用餐类型</label>
-      <div class="flex gap-4">
+      <div class="grid grid-cols-3 gap-3">
+        <button
+          @click="selectedMealType = 'breakfast'"
+          :class="[
+            'py-3 px-4 rounded-lg border-2 transition-all',
+            selectedMealType === 'breakfast'
+              ? 'border-gold bg-gold/10 text-gold font-semibold'
+              : 'border-gray-200 hover:border-gray-300',
+          ]"
+        >
+          🌅 早餐
+        </button>
         <button
           @click="selectedMealType = 'lunch'"
           :class="[
-            'flex-1 py-3 px-6 rounded-lg border-2 transition-all',
+            'py-3 px-4 rounded-lg border-2 transition-all',
             selectedMealType === 'lunch'
               ? 'border-gold bg-gold/10 text-gold font-semibold'
               : 'border-gray-200 hover:border-gray-300',
@@ -20,7 +31,7 @@
         <button
           @click="selectedMealType = 'dinner'"
           :class="[
-            'flex-1 py-3 px-6 rounded-lg border-2 transition-all',
+            'py-3 px-4 rounded-lg border-2 transition-all',
             selectedMealType === 'dinner'
               ? 'border-gold bg-gold/10 text-gold font-semibold'
               : 'border-gray-200 hover:border-gray-300',
@@ -188,7 +199,7 @@ interface MealPackage {
   price: number
   cuisine_id: string
   cuisine_name: string
-  meal_type: 'lunch' | 'dinner'
+  meal_type: 'breakfast' | 'lunch' | 'dinner'
   max_guests: number
 }
 
@@ -199,16 +210,16 @@ interface PriceRange {
 }
 
 const emit = defineEmits<{
-  'update:mealType': [value: 'lunch' | 'dinner']
+  'update:mealType': [value: 'breakfast' | 'lunch' | 'dinner']
   'update:package': [value: MealPackage | null]
 }>()
 
 const props = defineProps<{
-  mealType?: 'lunch' | 'dinner'
+  mealType?: 'breakfast' | 'lunch' | 'dinner'
   package?: MealPackage | null
 }>()
 
-const selectedMealType = ref<'lunch' | 'dinner'>(props.mealType || 'lunch')
+const selectedMealType = ref<'breakfast' | 'lunch' | 'dinner'>(props.mealType || 'lunch')
 const selectedCuisineId = ref<string | null>(null)
 const selectedPriceRange = ref<PriceRange | null>(null)
 const selectedPackage = ref<MealPackage | null>(props.package || null)

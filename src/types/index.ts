@@ -64,7 +64,7 @@ export interface MealPackage {
   price: number
   cuisineId: string
   cuisine?: Cuisine
-  mealType: 'lunch' | 'dinner'
+  mealType: 'breakfast' | 'lunch' | 'dinner'
   maxGuests: number
   createdAt: string
   updatedAt: string
@@ -75,7 +75,7 @@ export interface RestaurantBooking {
   userId: string
   user?: User
   bookingDate: string
-  mealType: 'lunch' | 'dinner'
+  mealType: 'breakfast' | 'lunch' | 'dinner'
   timeSlot: string
   guestCount: number
   packageId: string
@@ -89,7 +89,7 @@ export interface RestaurantBooking {
 
 export interface TimeSlot {
   id: string
-  mealType: 'lunch' | 'dinner'
+  mealType: 'breakfast' | 'lunch' | 'dinner'
   startTime: string
   endTime: string
   maxCapacity: number
@@ -141,7 +141,7 @@ export interface RoomBookingForm {
 
 export interface RestaurantBookingForm {
   bookingDate: string
-  mealType: 'lunch' | 'dinner'
+  mealType: 'breakfast' | 'lunch' | 'dinner'
   timeSlot: string
   guestCount: number
   packageId: string

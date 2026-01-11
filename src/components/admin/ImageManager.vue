@@ -251,13 +251,17 @@ async function deleteSelectedImages() {
 }
 
 function copyImageUrl(filePath: string) {
-  const fullUrl = `${API_BASE}${filePath}`
+  // 图片在服务器根路径，不在 /api 路径下
+  const serverUrl = API_BASE.replace('/api', '')
+  const fullUrl = `${serverUrl}${filePath}`
   navigator.clipboard.writeText(fullUrl)
   alert('图片链接已复制到剪贴板')
 }
 
 function getImageUrl(filePath: string) {
-  return `${API_BASE}${filePath}`
+  // 图片在服务器根路径，不在 /api 路径下
+  const serverUrl = API_BASE.replace('/api', '')
+  return `${serverUrl}${filePath}`
 }
 
 function formatFileSize(bytes: number) {

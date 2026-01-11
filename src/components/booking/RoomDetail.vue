@@ -49,7 +49,7 @@
               @click="currentImageIndex = index"
             >
               <img
-                :src="image"
+                :src="getImageUrl(image)"
                 :alt="`${roomType.name} ${index + 1}`"
                 class="w-full h-full object-cover"
               />
@@ -138,10 +138,27 @@ const currentImageIndex = ref(0)
 // 当前显示的图片
 const currentImage = computed(() => {
   if (roomType.value?.images && roomType.value.images.length > 0) {
-    return roomType.value.images[currentImageIndex.value]
+    const imagePath = roomType.value.images[currentImageIndex.value]
+    // 如果是完整URL，直接返回
+    if (imagePath.startsWith('http')) {
+      return imagePath
+    }
+    // 图片在服务器根路径，不在 /api 路径下
+    const serverUrl =
+      import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'
+    return `${serverUrl}${imagePath}`
   }
   return 'https://via.placeholder.com/800x600?text=Room+Image'
 })
+
+// 获取图片URL的辅助函数
+const getImageUrl = (imagePath: string) => {
+  if (!imagePath) return 'https://via.placeholder.com/200x150?text=Image'
+  if (imagePath.startsWith('http')) return imagePath
+  const serverUrl =
+    import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'
+  return `${serverUrl}${imagePath}`
+}
 
 // 获取房间类型详情
 const fetchRoomType = async () => {

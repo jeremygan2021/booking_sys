@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="modelValue" class="modal-overlay" @click="handleOverlayClick">
-        <div class="modal-container" @click.stop>
+        <div :class="['modal-container', `modal-${props.size || 'medium'}`]" @click.stop>
           <div class="modal-header">
             <h3 class="modal-title">{{ title }}</h3>
             <button @click="close" class="close-btn">
@@ -33,6 +33,7 @@ const props = defineProps<{
   modelValue: boolean
   title: string
   closeOnOverlay?: boolean
+  size?: 'small' | 'medium' | 'large'
 }>()
 
 const emit = defineEmits<{
@@ -66,11 +67,22 @@ function handleOverlayClick() {
   background-color: white;
   border-radius: 0.75rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
   width: 100%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+}
+
+.modal-small {
+  max-width: 400px;
+}
+
+.modal-medium {
+  max-width: 600px;
+}
+
+.modal-large {
+  max-width: 900px;
 }
 
 .modal-header {

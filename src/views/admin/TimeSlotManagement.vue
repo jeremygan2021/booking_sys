@@ -13,6 +13,61 @@
       </div>
     </div>
 
+    <!-- Breakfast Time Slots -->
+    <div v-if="activeTab === 'breakfast'" class="content-section">
+      <AdminCard title="早餐时间段配置" subtitle="管理早餐的可用时间段">
+        <div class="timeslots-list">
+          <div v-for="slot in breakfastSlots" :key="slot.id" class="timeslot-item">
+            <div class="timeslot-info">
+              <div class="time-display">
+                <svg
+                  class="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span class="time-text">{{ slot.start_time }} - {{ slot.end_time }}</span>
+              </div>
+              <div class="capacity-info">
+                <span class="capacity-label">容量:</span>
+                <span class="capacity-value">{{ slot.max_capacity }} 人</span>
+              </div>
+              <div class="status-info">
+                <span :class="['status-indicator', slot.is_active ? 'active' : 'inactive']"></span>
+                <span class="status-text">{{ slot.is_active ? '启用' : '禁用' }}</span>
+              </div>
+            </div>
+            <div class="timeslot-actions">
+              <button @click="editTimeSlot(slot)" class="action-btn edit-btn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                编辑
+              </button>
+              <button @click="toggleTimeSlot(slot)" class="action-btn toggle-btn">
+                {{ slot.is_active ? '禁用' : '启用' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <AdminButton variant="primary" @click="addTimeSlot('breakfast')" class="mt-4">
+          添加早餐时间段
+        </AdminButton>
+      </AdminCard>
+    </div>
+
     <!-- Lunch Time Slots -->
     <div v-if="activeTab === 'lunch'" class="content-section">
       <AdminCard title="午餐时间段配置" subtitle="管理午餐的可用时间段">
@@ -132,6 +187,7 @@
       <div v-if="editingSlot" class="form-group">
         <label class="form-label">用餐类型</label>
         <select v-model="editingSlot.meal_type" class="form-input" :disabled="isEditing">
+          <option value="breakfast">早餐</option>
           <option value="lunch">午餐</option>
           <option value="dinner">晚餐</option>
         </select>
@@ -185,10 +241,14 @@ const editingSlot = ref<TimeSlot | null>(null)
 const isEditing = ref(false)
 
 const tabs = [
+  { id: 'breakfast', label: '早餐时间' },
   { id: 'lunch', label: '午餐时间' },
   { id: 'dinner', label: '晚餐时间' },
 ]
 
+const breakfastSlots = computed(() =>
+  timeSlots.value.filter((slot) => slot.meal_type === 'breakfast'),
+)
 const lunchSlots = computed(() => timeSlots.value.filter((slot) => slot.meal_type === 'lunch'))
 const dinnerSlots = computed(() => timeSlots.value.filter((slot) => slot.meal_type === 'dinner'))
 

@@ -56,6 +56,11 @@ const router = createRouter({
           name: 'admin-timeslots',
           component: () => import('../views/admin/TimeSlotManagement.vue'),
         },
+        {
+          path: 'menu',
+          name: 'admin-menu',
+          component: () => import('../views/admin/MenuManagement.vue'),
+        },
       ],
     },
     {
