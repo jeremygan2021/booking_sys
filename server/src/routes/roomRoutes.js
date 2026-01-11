@@ -10,6 +10,7 @@ import {
   getRoomById,
   checkRoomAvailability,
   createRoomBooking,
+  createGuestRoomBooking,
   getUserRoomBookings,
   getRoomBookingById,
   updateRoomBookingStatus,
@@ -61,6 +62,9 @@ router.delete('/types/:id', authenticate, requireAdmin, deleteRoomType);
 // ========== 预订路由 ==========
 // Booking routes
 // 注意：具体路径的路由必须放在参数路由之前
+
+// 创建访客预订（无需认证）
+router.post('/bookings/guest', bookingValidation, createGuestRoomBooking);
 
 // 获取用户的预订 (需要认证)
 router.get('/bookings/my', authenticate, getUserRoomBookings);

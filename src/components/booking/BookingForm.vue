@@ -32,6 +32,31 @@
               <h2 class="text-2xl font-semibold text-gray-800 mb-4">预订信息</h2>
 
               <form @submit.prevent="submitBooking">
+                <!-- 姓名 -->
+                <div class="mb-4">
+                  <label class="block text-gray-700 font-semibold mb-2">姓名 *</label>
+                  <input
+                    v-model="form.guestName"
+                    type="text"
+                    required
+                    placeholder="请输入您的姓名"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+
+                <!-- 手机号码 -->
+                <div class="mb-4">
+                  <label class="block text-gray-700 font-semibold mb-2">手机号码 *</label>
+                  <input
+                    v-model="form.guestPhone"
+                    type="tel"
+                    required
+                    pattern="[0-9]{11}"
+                    placeholder="请输入11位手机号码"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+
                 <!-- 客人数量 -->
                 <div class="mb-4">
                   <label class="block text-gray-700 font-semibold mb-2">客人数量</label>
@@ -181,13 +206,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import BookingCalendar from './BookingCalendar.vue'
 import type { RoomType, RoomBooking } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
-const authStore = useAuthStore()
 
 // 状态
 const roomTypeId = ref<string>('')
@@ -195,6 +218,8 @@ const roomType = ref<RoomType | null>(null)
 const form = ref({
   checkInDate: '',
   checkOutDate: '',
+  guestName: '',
+  guestPhone: '',
   guestCount: 1,
   specialRequests: '',
 })
@@ -231,6 +256,9 @@ const canSubmit = computed(() => {
   return (
     form.value.checkInDate &&
     form.value.checkOutDate &&
+    form.value.guestName.trim() &&
+    form.value.guestPhone.trim() &&
+    /^[0-9]{11}$/.test(form.value.guestPhone) &&
     form.value.guestCount > 0 &&
     form.value.guestCount <= maxOccupancy.value &&
     !submitting.value
@@ -271,15 +299,6 @@ const formatDate = (dateStr: string) => {
 const submitBooking = async () => {
   if (!canSubmit.value) return
 
-  // 检查是否登录
-  if (!authStore.isAuthenticated) {
-    router.push({
-      name: 'login',
-      query: { redirect: route.fullPath },
-    })
-    return
-  }
-
   submitting.value = true
   error.value = ''
 
@@ -298,17 +317,18 @@ const submitBooking = async () => {
     // 选择第一个可用房间
     const availableRoom = availabilityData.data.available_rooms[0]
 
-    // 创建预订
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms/bookings`, {
+    // 创建预订（无需登录）
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms/bookings/guest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authStore.token}`,
       },
       body: JSON.stringify({
         room_id: availableRoom.id,
         check_in_date: form.value.checkInDate,
         check_out_date: form.value.checkOutDate,
+        guest_name: form.value.guestName,
+        guest_phone: form.value.guestPhone,
         guest_count: form.value.guestCount,
         special_requests: form.value.specialRequests,
       }),

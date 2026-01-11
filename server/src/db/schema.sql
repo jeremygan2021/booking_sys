@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS room_bookings (
     room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
+    guest_name VARCHAR(255),
+    guest_phone VARCHAR(20),
     guest_count INTEGER NOT NULL CHECK (guest_count > 0),
     total_price DECIMAL(10,2) NOT NULL CHECK (total_price >= 0),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed')),
