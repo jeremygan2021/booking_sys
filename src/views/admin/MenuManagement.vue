@@ -317,7 +317,7 @@ interface MealPackage {
   max_guests: number
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 const activeTab = ref('cuisines')
 const loading = ref(false)

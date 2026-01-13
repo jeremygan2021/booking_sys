@@ -118,7 +118,7 @@ import { ref, onMounted } from 'vue'
 import { AdminButton } from '@/components/admin'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 const images = ref<
   Array<{

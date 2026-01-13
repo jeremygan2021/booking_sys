@@ -240,7 +240,7 @@ interface Booking {
   total_price?: number | string
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 const loading = ref(false)
 const saving = ref(false)

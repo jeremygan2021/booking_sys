@@ -294,7 +294,7 @@ interface Cuisine {
   image_url?: string
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 const activeTab = ref('rooms')
 const saving = ref(false)
