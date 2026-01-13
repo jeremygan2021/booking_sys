@@ -678,6 +678,84 @@ export const updateRoomBookingStatus = async (req, res, next) => {
 };
 
 /**
+ * 更新房间预订 (管理员)
+ * Update room booking (admin)
+ */
+export const updateRoomBooking = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, special_requests } = req.body;
+
+    // 验证状态
+    if (status && !['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_STATUS',
+          message: '无效的预订状态',
+        },
+      });
+    }
+
+    // 构建更新查询
+    const updates = [];
+    const params = [];
+    let paramCount = 0;
+
+    if (status !== undefined) {
+      paramCount++;
+      updates.push(`status = $${paramCount}`);
+      params.push(status);
+    }
+
+    if (special_requests !== undefined) {
+      paramCount++;
+      updates.push(`special_requests = $${paramCount}`);
+      params.push(special_requests);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_UPDATES',
+          message: '没有提供要更新的字段',
+        },
+      });
+    }
+
+    paramCount++;
+    const query = `
+      UPDATE room_bookings 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    params.push(id);
+
+    const result = await pool.query(query, params);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'BOOKING_NOT_FOUND',
+          message: '预订不存在',
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result.rows[0],
+      message: '预订已更新',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * 获取所有预订 (管理员)
  * Get all bookings (admin)
  */

@@ -168,6 +168,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 
+interface Room {
+  id: string
+  name: string
+  description: string
+  capacity: number
+  facilities: string[]
+  type: string
+}
+
 interface MealPackage {
   id: string
   name: string
@@ -183,6 +192,7 @@ interface TimeSlot {
 }
 
 const props = defineProps<{
+  selectedRoom: Room | null
   selectedPackage: MealPackage | null
   bookingDate: string
   mealType: 'breakfast' | 'lunch' | 'dinner'
@@ -288,6 +298,7 @@ const handleSubmit = async () => {
       guest_phone: formData.value.contact_phone,
       guest_count: formData.value.guest_count,
       package_id: props.selectedPackage!.id,
+      dining_room_id: props.selectedRoom?.id || null,
       total_price: totalPrice.value,
       special_requests: formData.value.special_requests || null,
     }

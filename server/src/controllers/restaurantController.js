@@ -231,6 +231,7 @@ export const createGuestRestaurantBooking = async (req, res, next) => {
       guest_phone,
       guest_count,
       package_id,
+      dining_room_id,
       total_price,
       special_requests
     } = req.body;
@@ -266,7 +267,57 @@ export const createGuestRestaurantBooking = async (req, res, next) => {
     
     const timeSlotConfig = timeSlotResult.rows[0];
     
-    // 检查该时间段的容量
+    // 如果选择了用餐房间，检查房间容量和可用性
+    if (dining_room_id) {
+      const roomResult = await pool.query(
+        'SELECT * FROM dining_rooms WHERE id = $1 AND is_available = true',
+        [dining_room_id]
+      );
+      
+      if (roomResult.rows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: { message: '选择的用餐房间不可用' }
+        });
+      }
+      
+      const room = roomResult.rows[0];
+      
+      // 检查客人数量是否超过房间容量
+      if (guest_count > room.capacity) {
+        return res.status(400).json({
+          success: false,
+          error: { 
+            message: `客人数量超过房间最大容纳人数 (${room.capacity})`,
+            max_capacity: room.capacity
+          }
+        });
+      }
+      
+      // 检查该房间在该时间段是否已被预订
+      const roomBookingResult = await pool.query(
+        `SELECT COALESCE(SUM(guest_count), 0) as total_guests
+         FROM restaurant_bookings
+         WHERE booking_date = $1 AND meal_type = $2 AND time_slot = $3 
+           AND dining_room_id = $4 AND status != 'cancelled'`,
+        [booking_date, meal_type, timeSlotConfig.start_time, dining_room_id]
+      );
+      
+      const roomCurrentGuests = parseInt(roomBookingResult.rows[0].total_guests);
+      const roomAvailableCapacity = room.capacity - roomCurrentGuests;
+      
+      if (guest_count > roomAvailableCapacity) {
+        return res.status(400).json({
+          success: false,
+          error: { 
+            message: '该房间在此时间段容量不足',
+            available_capacity: roomAvailableCapacity
+          }
+        });
+      }
+    }
+    
+    // 检查该时间段的总容量
     const bookingsResult = await pool.query(
       `SELECT COALESCE(SUM(guest_count), 0) as total_guests
        FROM restaurant_bookings
@@ -290,10 +341,10 @@ export const createGuestRestaurantBooking = async (req, res, next) => {
     // 创建预订（不关联用户）
     const result = await pool.query(
       `INSERT INTO restaurant_bookings 
-       (booking_date, meal_type, time_slot, guest_name, guest_phone, guest_count, package_id, total_price, special_requests, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
+       (booking_date, meal_type, time_slot, guest_name, guest_phone, guest_count, package_id, dining_room_id, total_price, special_requests, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
        RETURNING *`,
-      [booking_date, meal_type, timeSlotConfig.start_time, guest_name, guest_phone, guest_count, package_id, total_price, special_requests]
+      [booking_date, meal_type, timeSlotConfig.start_time, guest_name, guest_phone, guest_count, package_id, dining_room_id, total_price, special_requests]
     );
     
     const booking = result.rows[0];

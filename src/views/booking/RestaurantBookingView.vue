@@ -36,13 +36,33 @@
 
         <!-- 步骤内容 -->
         <div class="bg-white rounded-lg shadow-lg p-8">
-          <!-- 步骤 1: 选择菜单 -->
+          <!-- 步骤 1: 选择房间 -->
           <div v-show="currentStep === 1">
+            <RoomSelection v-model="bookingData.selectedRoom" />
+            <div class="mt-8 flex justify-end">
+              <button
+                @click="nextStep"
+                :disabled="!bookingData.selectedRoom"
+                class="px-8 py-3 bg-gold text-white rounded-lg hover:bg-gold/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold"
+              >
+                下一步
+              </button>
+            </div>
+          </div>
+
+          <!-- 步骤 2: 选择菜单 -->
+          <div v-show="currentStep === 2">
             <MenuSelection
               v-model:meal-type="bookingData.mealType"
               v-model:package="bookingData.selectedPackage"
             />
-            <div class="mt-8 flex justify-end">
+            <div class="mt-8 flex justify-between">
+              <button
+                @click="previousStep"
+                class="px-8 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+              >
+                上一步
+              </button>
               <button
                 @click="nextStep"
                 :disabled="!bookingData.selectedPackage"
@@ -53,8 +73,8 @@
             </div>
           </div>
 
-          <!-- 步骤 2: 选择时间 -->
-          <div v-show="currentStep === 2">
+          <!-- 步骤 3: 选择时间 -->
+          <div v-show="currentStep === 3">
             <TimeSlotPicker
               v-model:date="bookingData.date"
               v-model:meal-type="bookingData.mealType"
@@ -77,9 +97,10 @@
             </div>
           </div>
 
-          <!-- 步骤 3: 填写信息 -->
-          <div v-show="currentStep === 3">
+          <!-- 步骤 4: 填写信息 -->
+          <div v-show="currentStep === 4">
             <DiningBookingForm
+              :selected-room="bookingData.selectedRoom"
               :selected-package="bookingData.selectedPackage"
               :booking-date="bookingData.date"
               :meal-type="bookingData.mealType"
@@ -98,11 +119,22 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import RestaurantGallery from '@/components/booking/RestaurantGallery.vue'
+import RoomSelection from '@/components/booking/RoomSelection.vue'
 import MenuSelection from '@/components/booking/MenuSelection.vue'
 import TimeSlotPicker from '@/components/booking/TimeSlotPicker.vue'
 import DiningBookingForm from '@/components/booking/DiningBookingForm.vue'
 
 // Use local interfaces that match the API response format
+interface Room {
+  id: string
+  name: string
+  description: string
+  image: string
+  facilities: string[]
+  capacity: number
+  type: string
+}
+
 interface MealPackage {
   id: string
   name: string
@@ -126,15 +158,17 @@ interface TimeSlot {
 
 const router = useRouter()
 
-const steps = ['选择菜单', '选择时间', '填写信息']
+const steps = ['选择房间', '选择菜单', '选择时间', '填写信息']
 const currentStep = ref(1)
 
 const bookingData = ref<{
+  selectedRoom: Room | null
   mealType: 'breakfast' | 'lunch' | 'dinner'
   selectedPackage: MealPackage | null
   date: string
   timeSlot: TimeSlot | null
 }>({
+  selectedRoom: null,
   mealType: 'lunch',
   selectedPackage: null,
   date: '',

@@ -44,7 +44,7 @@
 
     <!-- Restaurant Content Management -->
     <div v-if="activeTab === 'restaurant'" class="content-section">
-      <AdminCard title="餐厅内容管理" subtitle="编辑餐厅介绍和菜系信息">
+      <AdminCard title="餐厅内容管理" subtitle="编辑餐厅介绍信息">
         <div class="content-editor">
           <div class="editor-toolbar">
             <button
@@ -101,42 +101,26 @@
         </div>
       </AdminCard>
 
-      <!-- Cuisines Management -->
-      <AdminCard title="菜系管理" subtitle="管理餐厅提供的菜系分类" class="mt-6">
-        <div class="cuisines-list">
-          <div v-for="cuisine in cuisines" :key="cuisine.id" class="cuisine-item">
-            <div class="cuisine-info">
-              <h4>{{ cuisine.name }}</h4>
-              <p class="text-sm text-gray-600">{{ cuisine.description }}</p>
-            </div>
-            <div class="cuisine-actions">
-              <button @click="editCuisine(cuisine)" class="action-icon-btn">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-              </button>
-              <button @click="deleteCuisine(cuisine.id)" class="action-icon-btn text-red-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </button>
-            </div>
+      <div class="info-card mt-6">
+        <div class="info-content">
+          <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div>
+            <h4 class="info-title">菜系和套餐管理</h4>
+            <p class="info-text">
+              如需管理餐厅的菜系分类和套餐，请前往
+              <RouterLink to="/admin/menu" class="info-link">菜单管理</RouterLink>
+              页面
+            </p>
           </div>
         </div>
-        <AdminButton variant="primary" @click="showAddCuisineModal = true" class="mt-4">
-          添加菜系
-        </AdminButton>
-      </AdminCard>
+      </div>
     </div>
 
     <!-- Image Management -->
@@ -194,46 +178,6 @@
       </template>
     </AdminModal>
 
-    <!-- Add/Edit Cuisine Modal -->
-    <AdminModal v-model="showAddCuisineModal" :title="editingCuisineId ? '编辑菜系' : '添加菜系'">
-      <div class="form-group">
-        <label class="form-label">菜系名称</label>
-        <input v-model="newCuisine.name" type="text" class="form-input" />
-
-        <label class="form-label mt-4">菜系描述</label>
-        <textarea v-model="newCuisine.description" rows="3" class="form-input"></textarea>
-
-        <label class="form-label mt-4">菜系封面</label>
-        <div class="image-selector">
-          <div v-if="newCuisine.image_url" class="selected-images">
-            <div class="selected-image-item">
-              <img :src="getFullImageUrl(newCuisine.image_url)" alt="菜系封面" />
-              <button @click="newCuisine.image_url = ''" class="remove-image-btn" type="button">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <AdminButton variant="secondary" @click="openImagePicker('cuisine')" type="button">
-            选择封面图片
-          </AdminButton>
-        </div>
-      </div>
-
-      <template #footer>
-        <AdminButton variant="secondary" @click="closeAddCuisineModal">取消</AdminButton>
-        <AdminButton variant="primary" @click="saveCuisine" :loading="saving">
-          {{ editingCuisineId ? '保存' : '添加' }}
-        </AdminButton>
-      </template>
-    </AdminModal>
-
     <!-- Image Picker Modal -->
     <AdminModal v-model="showImagePicker" title="选择图片" size="large">
       <div class="image-picker-content">
@@ -274,6 +218,7 @@
 </template>
 
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { ref, onMounted, h } from 'vue'
 import { AdminCard, AdminButton, AdminModal } from '@/components/admin'
 import ImageManager from '@/components/admin/ImageManager.vue'
@@ -285,13 +230,6 @@ interface RoomType {
   description?: string
   base_price?: number
   max_occupancy?: number
-}
-
-interface Cuisine {
-  id: string | number
-  name: string
-  description?: string
-  image_url?: string
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -317,18 +255,12 @@ const originalRestaurantContent = ref('')
 const restaurantImages = ref<string[]>([])
 const originalRestaurantImages = ref<string[]>([])
 
-// Cuisines
-const cuisines = ref<Cuisine[]>([])
-const showAddCuisineModal = ref(false)
-const editingCuisineId = ref<string | number | null>(null)
-const newCuisine = ref({ name: '', description: '', image_url: '' })
-
 // Image Picker
 const showImagePicker = ref(false)
 const loadingImages = ref(false)
 const availableImages = ref<Array<{ id: string; file_path: string; original_name: string }>>([])
 const selectedImagePath = ref<string>('')
-const imagePickerTarget = ref<'room' | 'cuisine' | 'restaurant'>('room')
+const imagePickerTarget = ref<'room' | 'restaurant'>('room')
 
 // Editor Actions
 const editorActions = [
@@ -381,7 +313,6 @@ const editorActions = [
 
 onMounted(async () => {
   await loadRoomTypes()
-  await loadCuisines()
   await loadRestaurantContent()
 })
 
@@ -391,15 +322,6 @@ async function loadRoomTypes() {
     roomTypes.value = response.data
   } catch (error) {
     console.error('Failed to load room types:', error)
-  }
-}
-
-async function loadCuisines() {
-  try {
-    const response = await axios.get(`${API_BASE}/restaurant/cuisines`)
-    cuisines.value = response.data.success ? response.data.data : response.data
-  } catch (error) {
-    console.error('Failed to load cuisines:', error)
   }
 }
 
@@ -526,76 +448,8 @@ async function saveRestaurantContent() {
   }
 }
 
-function editCuisine(cuisine: Cuisine) {
-  editingCuisineId.value = cuisine.id
-  newCuisine.value = {
-    name: cuisine.name,
-    description: cuisine.description || '',
-    image_url: cuisine.image_url || '',
-  }
-  showAddCuisineModal.value = true
-}
-
-function closeAddCuisineModal() {
-  showAddCuisineModal.value = false
-  editingCuisineId.value = null
-  newCuisine.value = { name: '', description: '', image_url: '' }
-}
-
-async function saveCuisine() {
-  if (!newCuisine.value.name) {
-    alert('请输入菜系名称')
-    return
-  }
-
-  saving.value = true
-  try {
-    const token = localStorage.getItem('auth_token')
-    if (editingCuisineId.value) {
-      // 更新菜系
-      await axios.put(
-        `${API_BASE}/restaurant/cuisines/${editingCuisineId.value}`,
-        newCuisine.value,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      )
-      alert('菜系已更新')
-    } else {
-      // 添加菜系
-      await axios.post(`${API_BASE}/restaurant/cuisines`, newCuisine.value, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      alert('菜系已添加')
-    }
-    await loadCuisines()
-    closeAddCuisineModal()
-  } catch (error) {
-    console.error('Failed to save cuisine:', error)
-    alert('保存失败，请重试')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function deleteCuisine(id: string | number) {
-  if (!confirm('确定要删除这个菜系吗？')) return
-
-  try {
-    const token = localStorage.getItem('auth_token')
-    await axios.delete(`${API_BASE}/restaurant/cuisines/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    await loadCuisines()
-    alert('菜系已删除')
-  } catch (error) {
-    console.error('Failed to delete cuisine:', error)
-    alert('删除失败，请重试')
-  }
-}
-
 // Image Picker Functions
-async function openImagePicker(target: 'room' | 'cuisine' | 'restaurant') {
+async function openImagePicker(target: 'room' | 'restaurant') {
   imagePickerTarget.value = target
   selectedImagePath.value = ''
   showImagePicker.value = true
@@ -621,8 +475,6 @@ function confirmImageSelection() {
       editingRoom.value.images = []
     }
     editingRoom.value.images.push(selectedImagePath.value)
-  } else if (imagePickerTarget.value === 'cuisine') {
-    newCuisine.value.image_url = selectedImagePath.value
   } else if (imagePickerTarget.value === 'restaurant') {
     restaurantImages.value.push(selectedImagePath.value)
   }
@@ -802,52 +654,50 @@ function getFullImageUrl(path: string) {
   line-height: 1.6;
 }
 
-/* Cuisines List */
-.cuisines-list {
+/* Info Card */
+.info-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.info-content {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  align-items: flex-start;
 }
 
-.cuisine-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
+.info-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #2563eb;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
 }
 
-.cuisine-item:hover {
-  background-color: #f9fafb;
-}
-
-.cuisine-info h4 {
+.info-title {
   font-weight: 600;
-  color: #1f2937;
+  color: #1e40af;
   margin-bottom: 0.25rem;
+  font-size: 0.9375rem;
 }
 
-.cuisine-actions {
-  display: flex;
-  gap: 0.5rem;
+.info-text {
+  color: #1e40af;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-.action-icon-btn {
-  padding: 0.5rem;
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  border-radius: 0.25rem;
-  transition: all 0.2s;
+.info-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: underline;
+  transition: color 0.2s;
 }
 
-.action-icon-btn:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
+.info-link:hover {
+  color: #1d4ed8;
 }
 
 /* Action Buttons */

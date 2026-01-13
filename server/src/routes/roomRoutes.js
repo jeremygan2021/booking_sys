@@ -14,6 +14,7 @@ import {
   getUserRoomBookings,
   getRoomBookingById,
   updateRoomBookingStatus,
+  updateRoomBooking,
   getAllRoomBookings,
 } from '../controllers/roomController.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
@@ -74,6 +75,9 @@ router.get('/bookings', authenticate, requireAdmin, getAllRoomBookings);
 
 // 创建房间预订 (需要认证)
 router.post('/bookings', authenticate, bookingValidation, createRoomBooking);
+
+// 更新预订 (管理员)
+router.put('/bookings/:id', authenticate, requireAdmin, updateRoomBooking);
 
 // 更新预订状态 (需要认证)
 router.put('/bookings/:id/status', authenticate, updateRoomBookingStatus);

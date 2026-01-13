@@ -155,26 +155,34 @@ END;
 $$ language 'plpgsql';
 
 -- 为需要自动更新时间戳的表创建触发器
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_room_types_updated_at ON room_types;
 CREATE TRIGGER update_room_types_updated_at BEFORE UPDATE ON room_types
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_rooms_updated_at ON rooms;
 CREATE TRIGGER update_rooms_updated_at BEFORE UPDATE ON rooms
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_room_bookings_updated_at ON room_bookings;
 CREATE TRIGGER update_room_bookings_updated_at BEFORE UPDATE ON room_bookings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_meal_packages_updated_at ON meal_packages;
 CREATE TRIGGER update_meal_packages_updated_at BEFORE UPDATE ON meal_packages
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_restaurant_bookings_updated_at ON restaurant_bookings;
 CREATE TRIGGER update_restaurant_bookings_updated_at BEFORE UPDATE ON restaurant_bookings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_content_sections_updated_at ON content_sections;
 CREATE TRIGGER update_content_sections_updated_at BEFORE UPDATE ON content_sections
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_cuisines_updated_at ON cuisines;
 CREATE TRIGGER update_cuisines_updated_at BEFORE UPDATE ON cuisines
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -8,6 +8,12 @@ import {
   updateMealPackage,
   deleteMealPackage
 } from '../controllers/adminRestaurantController.js';
+import {
+  createDiningRoom,
+  updateDiningRoom,
+  deleteDiningRoom,
+  getDiningRoomStatistics
+} from '../controllers/diningRoomController.js';
 import { authenticate as authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -28,5 +34,11 @@ router.delete('/cuisines/:id', authenticateToken, requireAdmin, deleteCuisine);
 router.post('/packages', authenticateToken, requireAdmin, createMealPackage);
 router.put('/packages/:id', authenticateToken, requireAdmin, updateMealPackage);
 router.delete('/packages/:id', authenticateToken, requireAdmin, deleteMealPackage);
+
+// Dining rooms management
+router.post('/dining-rooms', authenticateToken, requireAdmin, createDiningRoom);
+router.put('/dining-rooms/:id', authenticateToken, requireAdmin, updateDiningRoom);
+router.delete('/dining-rooms/:id', authenticateToken, requireAdmin, deleteDiningRoom);
+router.get('/dining-rooms/:id/statistics', authenticateToken, requireAdmin, getDiningRoomStatistics);
 
 export default router;

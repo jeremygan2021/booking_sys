@@ -47,6 +47,11 @@ const router = createRouter({
           component: () => import('../views/admin/BookingManagement.vue'),
         },
         {
+          path: 'dining-rooms',
+          name: 'admin-dining-rooms',
+          component: () => import('../views/admin/DiningRoomManagement.vue'),
+        },
+        {
           path: 'calendar',
           name: 'admin-calendar',
           component: () => import('../views/admin/CalendarView.vue'),

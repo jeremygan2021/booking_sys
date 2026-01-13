@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 后端 API 服务
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: booking_server
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=47.101.218.42
+      - DB_PORT=5432
+      - DB_NAME=booking
+      - DB_USER=booking
+      - DB_PASSWORD=123booking
+      - PORT=3000
+      - JWT_SECRET=your_jwt_secret_key_here
+      - UPLOAD_DIR=./uploads
+      - CORS_ORIGIN=*
+    volumes:
+      # 持久化上传的文件
+      - ./server/uploads:/app/uploads
+    # 启动命令：先初始化数据库，再运行迁移，最后启动服务
+    command: >
+      sh -c "npm run init-db && npm run migrate && npm start"
+    restart: always
+
+  # 前端 Web 服务
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking_web
+    ports:
+      # 映射到主机 8080 端口
+      - "8080:80"
+    depends_on:
+      - server
+    restart: always

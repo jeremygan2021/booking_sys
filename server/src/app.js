@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import restaurantRoutes from './routes/restaurantRoutes.js';
+import diningRoomRoutes from './routes/diningRoomRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -41,6 +42,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/dining-rooms', diningRoomRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
