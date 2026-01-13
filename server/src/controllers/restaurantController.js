@@ -64,12 +64,12 @@ export const getMealPackages = async (req, res, next) => {
     
     if (meal_type) {
       params.push(meal_type);
-      query += ` AND mp.meal_type = $$${params.length}`;
+      query += ` AND mp.meal_type = ${params.length}`;
     }
     
     if (cuisine_id) {
       params.push(cuisine_id);
-      query += ` AND mp.cuisine_id = $$${params.length}`;
+      query += ` AND mp.cuisine_id = ${params.length}`;
     }
     
     query += ' ORDER BY mp.price ASC';
@@ -128,7 +128,7 @@ export const getTimeSlots = async (req, res, next) => {
     
     if (meal_type) {
       params.push(meal_type);
-      query += ` AND meal_type = $$${params.length}`;
+      query += ` AND meal_type = $${params.length}`;
     }
     
     query += ' ORDER BY meal_type, start_time ASC';
@@ -419,27 +419,27 @@ export const getRestaurantBookings = async (req, res, next) => {
     // 电话号码搜索优先
     if (phone) {
       params.push(`%${phone}%`);
-      query += ` AND (rb.guest_phone LIKE $$${params.length} OR u.phone LIKE $$${params.length})`;
+      query += ` AND (rb.guest_phone LIKE ${params.length} OR u.phone LIKE ${params.length})`;
     }
     
     if (user_id) {
       params.push(user_id);
-      query += ` AND rb.user_id = $$${params.length}`;
+      query += ` AND rb.user_id = ${params.length}`;
     }
     
     if (status) {
       params.push(status);
-      query += ` AND rb.status = $$${params.length}`;
+      query += ` AND rb.status = ${params.length}`;
     }
     
     if (date) {
       params.push(date);
-      query += ` AND rb.booking_date = $$${params.length}`;
+      query += ` AND rb.booking_date = ${params.length}`;
     }
     
     if (meal_type) {
       params.push(meal_type);
-      query += ` AND rb.meal_type = $$${params.length}`;
+      query += ` AND rb.meal_type = ${params.length}`;
     }
     
     query += ' ORDER BY rb.booking_date DESC, rb.time_slot DESC';
@@ -513,12 +513,12 @@ export const updateRestaurantBooking = async (req, res, next) => {
     const params = [];
     if (status) {
       params.push(status);
-      updates.push(`status = $$${params.length}`);
+      updates.push(`status = ${params.length}`);
     }
     
     if (special_requests !== undefined) {
       params.push(special_requests);
-      updates.push(`special_requests = $$${params.length}`);
+      updates.push(`special_requests = ${params.length}`);
     }
     
     if (updates.length === 0) {
@@ -532,7 +532,7 @@ export const updateRestaurantBooking = async (req, res, next) => {
     const query = `
       UPDATE restaurant_bookings 
       SET ${updates.join(', ')}
-      WHERE id = $$${params.length}
+      WHERE id = ${params.length}
       RETURNING *
     `;
     
