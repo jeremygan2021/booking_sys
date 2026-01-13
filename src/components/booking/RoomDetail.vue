@@ -167,7 +167,8 @@ const fetchRoomType = async () => {
 
   try {
     const roomId = route.params.id
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms/types/${roomId}`)
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${apiBase}/rooms/types/${roomId}`)
     const data = await response.json()
 
     if (data.success) {

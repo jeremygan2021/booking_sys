@@ -187,7 +187,8 @@ const previousImage = () => {
 const fetchRestaurantContent = async () => {
   try {
     loading.value = true
-    const response = await fetch('/api/restaurant/content')
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${apiBase}/restaurant/content`)
     const data = await response.json()
 
     if (data.success && data.data) {

@@ -143,7 +143,8 @@ const fetchRoomTypes = async () => {
   error.value = ''
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms/types`)
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${apiBase}/rooms/types`)
     const data = await response.json()
 
     if (data.success) {
