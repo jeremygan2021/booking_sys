@@ -8,6 +8,11 @@ interface AuthResponse {
   user: User
 }
 
+interface SmsLoginForm {
+  phone: string
+  code: string
+}
+
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(null)
@@ -26,6 +31,60 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response: ApiResponse<AuthResponse> = await apiClient.post('/auth/login', credentials)
+
+      if (response.success && response.data) {
+        token.value = response.data.token
+        user.value = response.data.user
+        apiClient.setToken(response.data.token)
+
+        // Store user data in localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+
+        return true
+      } else {
+        error.value = response.error?.message || '登录失败'
+        return false
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '登录过程中发生错误'
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function sendSmsCode(phone: string): Promise<boolean> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response: ApiResponse<{ message: string }> = await apiClient.post('/auth/send-sms', {
+        phone,
+      })
+
+      if (response.success) {
+        return true
+      } else {
+        error.value = response.error?.message || '验证码发送失败'
+        return false
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '验证码发送失败'
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loginWithSms(credentials: SmsLoginForm): Promise<boolean> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response: ApiResponse<AuthResponse> = await apiClient.post(
+        '/auth/login-sms',
+        credentials,
+      )
 
       if (response.success && response.data) {
         token.value = response.data.token
@@ -135,6 +194,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     // Actions
     login,
+    sendSmsCode,
+    loginWithSms,
     logout,
     verifyToken,
     initializeAuth,

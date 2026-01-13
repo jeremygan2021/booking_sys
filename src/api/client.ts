@@ -59,13 +59,16 @@ class ApiClient {
           return this.request<T>(endpoint, options, retryCount + 1)
         }
 
+        // 处理后端返回的错误格式
+        const errorMessage = data.error?.message || data.message || 'An error occurred'
+
         return {
           success: false,
           error: {
-            code: response.status.toString(),
-            message: data.message || 'An error occurred',
-            details: data.details,
-            timestamp: new Date().toISOString(),
+            code: data.error?.code || response.status.toString(),
+            message: errorMessage,
+            details: data.error?.details || data.details,
+            timestamp: data.error?.timestamp || new Date().toISOString(),
           },
         }
       }

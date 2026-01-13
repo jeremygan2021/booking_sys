@@ -2,7 +2,7 @@
  * 统一错误处理中间件
  * Centralized error handling middleware
  */
-export const errorHandler = (err, req, res) => {
+export const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
   // 默认错误状态码和消息

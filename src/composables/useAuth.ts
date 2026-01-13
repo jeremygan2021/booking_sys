@@ -20,6 +20,8 @@ export function useAuth() {
 
     // Actions
     login: authStore.login,
+    sendSmsCode: authStore.sendSmsCode,
+    loginWithSms: authStore.loginWithSms,
     logout: authStore.logout,
     verifyToken: authStore.verifyToken,
     clearError: authStore.clearError,
