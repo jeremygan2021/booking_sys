@@ -94,7 +94,7 @@ npm run format
 复制 `.env.example` 到 `.env` 并配置以下变量：
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:3392/api
 ```
 
 ## 法式设计系统

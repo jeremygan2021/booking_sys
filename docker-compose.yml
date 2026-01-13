@@ -8,14 +8,14 @@ services:
       dockerfile: Dockerfile
     container_name: booking_server
     ports:
-      - "3000:3000"
+      - "3392:3392"
     environment:
       - DB_HOST=47.101.218.42
       - DB_PORT=5432
       - DB_NAME=booking
       - DB_USER=booking
       - DB_PASSWORD=123booking
-      - PORT=3000
+      - PORT=3392
       - JWT_SECRET=your_jwt_secret_key_here
       - UPLOAD_DIR=./uploads
       - CORS_ORIGIN=*
@@ -34,8 +34,10 @@ services:
       dockerfile: Dockerfile
     container_name: booking_web
     ports:
-      # 映射到主机 8080 端口
-      - "8080:80"
+      # 映射到主机 8199 端口
+      - "8199:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - server
     restart: always

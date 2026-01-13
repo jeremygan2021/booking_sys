@@ -39,7 +39,7 @@ export function useWebSocket(options: WebSocketOptions = {}) {
 
   const getWebSocketUrl = (): string => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3392/api'
     // Remove /api suffix and protocol to get the host
     const host = apiUrl.replace(/^https?:\/\//, '').replace(/\/api$/, '')
     return `${protocol}//${host}/ws`
