@@ -236,7 +236,12 @@ const getRoomTypeLabel = (type: string) => {
 
 const loadRooms = async () => {
   try {
-    const response = await fetch('/api/dining-rooms')
+    const token = localStorage.getItem('token')
+    const response = await fetch('/api/admin/dining-rooms', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
     const result = await response.json()
     if (result.success) {
       rooms.value = result.data

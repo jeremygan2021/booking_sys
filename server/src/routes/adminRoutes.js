@@ -1,4 +1,5 @@
 import express from 'express';
+import { body } from 'express-validator';
 import { createTimeSlot, updateTimeSlot, deleteTimeSlot } from '../controllers/adminController.js';
 import { 
   createCuisine, 
@@ -12,11 +13,19 @@ import {
   createDiningRoom,
   updateDiningRoom,
   deleteDiningRoom,
-  getDiningRoomStatistics
+  getDiningRoomStatistics,
+  getDiningRooms
 } from '../controllers/diningRoomController.js';
 import { authenticate as authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Dining Room Validation Rules
+const diningRoomValidation = [
+  body('name').trim().notEmpty().withMessage('名称不能为空'),
+  body('room_type').isIn(['mahjong', 'private', 'public', 'tea_room', 'garden', 'other']).withMessage('无效的房间类型'),
+  body('capacity').isInt({ min: 1 }).withMessage('容量必须大于0'),
+];
 
 // All admin routes require authentication and admin role
 
@@ -36,8 +45,9 @@ router.put('/packages/:id', authenticateToken, requireAdmin, updateMealPackage);
 router.delete('/packages/:id', authenticateToken, requireAdmin, deleteMealPackage);
 
 // Dining rooms management
-router.post('/dining-rooms', authenticateToken, requireAdmin, createDiningRoom);
-router.put('/dining-rooms/:id', authenticateToken, requireAdmin, updateDiningRoom);
+router.get('/dining-rooms', authenticateToken, requireAdmin, getDiningRooms);
+router.post('/dining-rooms', authenticateToken, requireAdmin, diningRoomValidation, createDiningRoom);
+router.put('/dining-rooms/:id', authenticateToken, requireAdmin, diningRoomValidation, updateDiningRoom);
 router.delete('/dining-rooms/:id', authenticateToken, requireAdmin, deleteDiningRoom);
 router.get('/dining-rooms/:id/statistics', authenticateToken, requireAdmin, getDiningRoomStatistics);
 

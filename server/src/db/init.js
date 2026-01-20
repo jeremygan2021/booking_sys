@@ -32,7 +32,7 @@ async function insertSeedData() {
       base_price: 880.00,
       max_occupancy: 2,
       amenities: JSON.stringify(['WiFi', 'AC', 'TV', 'Minibar']),
-      images: JSON.stringify(['/images/rooms/deluxe-1.jpg'])
+      images: JSON.stringify(['/images/rooms/private-room.svg'])
     },
     {
       name: 'Standard Room',
@@ -40,7 +40,7 @@ async function insertSeedData() {
       base_price: 580.00,
       max_occupancy: 2,
       amenities: JSON.stringify(['WiFi', 'AC']),
-      images: JSON.stringify(['/images/rooms/standard-1.jpg'])
+      images: JSON.stringify(['/images/rooms/open-area.svg'])
     },
     {
       name: 'Family Suite',
@@ -48,7 +48,7 @@ async function insertSeedData() {
       base_price: 1280.00,
       max_occupancy: 4,
       amenities: JSON.stringify(['WiFi', 'AC', 'TV', 'Kitchen', 'Balcony']),
-      images: JSON.stringify(['/images/rooms/suite-1.jpg'])
+      images: JSON.stringify(['/images/rooms/garden.svg'])
     }
   ];
 
@@ -82,8 +82,8 @@ async function insertSeedData() {
 
   // 3. Create Cuisines
   const cuisines = [
-    { name: 'French', description: 'Authentic French cuisine', image_url: '/images/cuisine/french.jpg' },
-    { name: 'Local Fusion', description: 'Local ingredients with modern twist', image_url: '/images/cuisine/fusion.jpg' }
+    { name: 'French', description: 'Authentic French cuisine', image_url: '/images/rooms/default.svg' },
+    { name: 'Local Fusion', description: 'Local ingredients with modern twist', image_url: '/images/rooms/default.svg' }
   ];
 
   for (const cuisine of cuisines) {
