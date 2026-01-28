@@ -15,11 +15,29 @@ async function insertSeedData() {
   await pool.query(`
     INSERT INTO users (email, password_hash, full_name, phone, role)
     VALUES ($1, $2, $3, $4, $5)
-    ON CONFLICT (email) DO UPDATE SET role = $5
+    ON CONFLICT (email) DO UPDATE SET role = $5, phone = $4
     RETURNING id;
   `, [adminEmail, adminPassword, 'System Administrator', '13800138000', 'admin']);
   
   console.log('  ✓ Admin user created/updated');
+
+  // 根据 ADMIN_PHONE_WHITELIST 为白名单中的每个手机号确保存在 admin 用户（用于验证码登录）
+  const whitelist = (process.env.ADMIN_PHONE_WHITELIST || '')
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p && /^1[3-9]\d{9}$/.test(p));
+  for (const phone of whitelist) {
+    const existing = await pool.query('SELECT id FROM users WHERE phone = $1 AND role = $2', [phone, 'admin']);
+    if (existing.rows.length === 0) {
+      const placeholderEmail = `admin_${phone}@internal`;
+      await pool.query(`
+        INSERT INTO users (email, password_hash, full_name, phone, role)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (email) DO UPDATE SET phone = $4, role = $5
+      `, [placeholderEmail, adminPassword, `Admin ${phone}`, phone, 'admin']);
+      console.log(`  ✓ Admin for phone ${phone} ensured`);
+    }
+  }
 
   // 2. Create Room Types
   // First clear existing room types to avoid duplicates if re-running without dropping tables

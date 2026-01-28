@@ -19,6 +19,7 @@ services:
       - JWT_SECRET=your_jwt_secret_key_here
       - UPLOAD_DIR=./uploads
       - CORS_ORIGIN=*
+      - ADMIN_PHONE_WHITELIST=13800138000,18585164448
     volumes:
       # 持久化上传的文件
       - ./server/uploads:/app/uploads

@@ -20,8 +20,8 @@
         <!-- 房间图片 -->
         <div class="relative h-48 bg-gray-200">
           <img
-            v-if="room.images && room.images.length > 0"
-            :src="room.images[0]"
+            v-if="(room.images || []).length > 0"
+            :src="(room.images || [])[0]"
             :alt="room.name"
             class="w-full h-full object-cover"
           />
@@ -41,7 +41,7 @@
         <!-- 房间信息 -->
         <div class="p-4">
           <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ room.name }}</h3>
-          <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ room.description }}</p>
+          <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ room.description || '—' }}</p>
 
           <!-- 房间类型和容量 -->
           <div class="flex items-center justify-between mb-3">
@@ -52,17 +52,17 @@
           <!-- 设施标签 -->
           <div class="flex flex-wrap gap-1 mb-4">
             <span
-              v-for="(facility, index) in room.facilities.slice(0, 3)"
+              v-for="(facility, index) in (room.facilities || []).slice(0, 3)"
               :key="index"
               class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
             >
               {{ facility }}
             </span>
             <span
-              v-if="room.facilities.length > 3"
+              v-if="(room.facilities || []).length > 3"
               class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
             >
-              +{{ room.facilities.length - 3 }}
+              +{{ (room.facilities || []).length - 3 }}
             </span>
           </div>
 
@@ -183,8 +183,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import AdminModal from './AdminModal.vue'
 import ImageManager from './ImageManager.vue'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const router = useRouter()
+const authStore = useAuthStore()
 
 interface DiningRoom {
   id: string
@@ -195,6 +201,21 @@ interface DiningRoom {
   facilities: string[]
   images: string[]
   is_available: boolean
+}
+
+function normalizeRoom(r: Record<string, unknown>): DiningRoom {
+  const facilities = Array.isArray(r.facilities) ? r.facilities : []
+  const images = Array.isArray(r.images) ? r.images : []
+  return {
+    id: String(r.id ?? ''),
+    name: String(r.name ?? ''),
+    description: String(r.description ?? ''),
+    room_type: String(r.room_type ?? 'other'),
+    capacity: Number(r.capacity) || 1,
+    facilities,
+    images,
+    is_available: r.is_available !== false,
+  }
 }
 
 const rooms = ref<DiningRoom[]>([])
@@ -236,19 +257,38 @@ const getRoomTypeLabel = (type: string) => {
 
 const loadRooms = async () => {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch('/api/admin/dining-rooms', {
+    const token = authStore.token ?? localStorage.getItem('auth_token')
+    if (!token) {
+      rooms.value = []
+      router.replace({ name: 'login' })
+      return
+    }
+    const response = await fetch(`${API_BASE}/admin/dining-rooms`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
     const result = await response.json()
-    if (result.success) {
-      rooms.value = result.data
+    if (response.status === 401) {
+      await authStore.logout()
+      router.replace({ name: 'login' })
+      alert(result.error?.message || '登录已过期，请重新登录')
+      return
+    }
+    if (response.ok && result.success && Array.isArray(result.data)) {
+      rooms.value = result.data.map((r: Record<string, unknown>) => normalizeRoom(r))
+    } else {
+      rooms.value = []
+      if (!response.ok || !result.success) {
+        const msg = result.error?.message || result.error?.code || `加载失败 (${response.status})`
+        console.error('加载房间失败:', msg)
+        alert(typeof msg === 'string' ? msg : '加载房间失败')
+      }
     }
   } catch (error) {
     console.error('加载房间失败:', error)
-    alert('加载房间失败')
+    rooms.value = []
+    alert('加载房间失败，请检查网络或后台服务')
   }
 }
 
@@ -284,10 +324,10 @@ const openEditModal = (room: DiningRoom) => {
 
 const saveRoom = async () => {
   try {
-    const token = localStorage.getItem('token')
+    const token = authStore.token ?? localStorage.getItem('auth_token')
     const url = isEditing.value
-      ? `/api/admin/dining-rooms/${editingId.value}`
-      : '/api/admin/dining-rooms'
+      ? `${API_BASE}/admin/dining-rooms/${editingId.value}`
+      : `${API_BASE}/admin/dining-rooms`
     const method = isEditing.value ? 'PUT' : 'POST'
 
     const response = await fetch(url, {
@@ -306,7 +346,8 @@ const saveRoom = async () => {
       showModal.value = false
       loadRooms()
     } else {
-      alert(result.error?.message || '操作失败')
+      const msg = result.error?.message || result.error?.code || '操作失败'
+      alert(typeof msg === 'string' ? msg : '操作失败')
     }
   } catch (error) {
     console.error('保存房间失败:', error)
@@ -318,8 +359,8 @@ const deleteRoom = async (id: string) => {
   if (!confirm('确定要删除这个房间吗？')) return
 
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`/api/admin/dining-rooms/${id}`, {
+    const token = authStore.token ?? localStorage.getItem('auth_token')
+    const response = await fetch(`${API_BASE}/admin/dining-rooms/${id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -332,7 +373,8 @@ const deleteRoom = async (id: string) => {
       alert('房间删除成功')
       loadRooms()
     } else {
-      alert(result.error?.message || '删除失败')
+      const msg = result.error?.message || result.error?.code || '删除失败'
+      alert(typeof msg === 'string' ? msg : '删除失败')
     }
   } catch (error) {
     console.error('删除房间失败:', error)
