@@ -8,14 +8,14 @@ services:
       dockerfile: Dockerfile
     container_name: booking_server
     ports:
-      - "3392:3392"
+      - "3000:3000"
     environment:
       - DB_HOST=47.101.218.42
       - DB_PORT=5432
       - DB_NAME=booking
       - DB_USER=booking
       - DB_PASSWORD=123booking
-      - PORT=3392
+      - PORT=3000
       - JWT_SECRET=your_jwt_secret_key_here
       - UPLOAD_DIR=./uploads
       - CORS_ORIGIN=*

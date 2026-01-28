@@ -14,8 +14,8 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-# Expose port 3392 for the application
-EXPOSE 3392
+# Expose port 3000 for the application
+EXPOSE 3000
 
 # Define the command to run the application
 CMD ["npm", "start"]

@@ -21,7 +21,7 @@ SERVER_CONTAINER_NAME="booking_server"
 
 WEB_LOCAL_PORT="8199"      # 宿主机前端端口
 WEB_CONTAINER_PORT="80"    # 容器前端端口
-SERVER_PORT="3392"         # 后端端口
+SERVER_PORT="3000"         # 后端端口
 
 WEB_TAR="booking_web.tar"
 SERVER_TAR="booking_server.tar"
@@ -112,7 +112,7 @@ deploy_on_server() {
 
         # 4. 启动后端容器
         echo "[INFO] 启动后端服务..."
-        # 注意：这里使用 --network-alias server，这样前端可以通过 http://server:3392 访问
+        # 注意：这里使用 --network-alias server，这样前端可以通过 http://server:3000 访问
         sudo docker run -d \
             --name ${SERVER_CONTAINER_NAME} \
             --network booking_net \
