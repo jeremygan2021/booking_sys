@@ -1,6 +1,7 @@
 import pool from '../db/connection.js';
 import { validationResult } from 'express-validator';
 import websocketService from '../services/websocketService.js';
+import smsService from '../utils/smsService.js';
 
 /**
  * 获取所有房间类型
@@ -81,9 +82,16 @@ export const createRoomType = async (req, res, next) => {
 
     const result = await pool.query(
       `INSERT INTO room_types (name, description, base_price, max_occupancy, amenities, images)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)
        RETURNING *`,
-      [name, description, base_price, max_occupancy, amenities || [], images || []]
+      [
+        name, 
+        description, 
+        base_price, 
+        max_occupancy, 
+        JSON.stringify(amenities || []), 
+        JSON.stringify(images || [])
+      ]
     );
 
     res.status(201).json({
@@ -122,11 +130,19 @@ export const updateRoomType = async (req, res, next) => {
            description = COALESCE($2, description),
            base_price = COALESCE($3, base_price),
            max_occupancy = COALESCE($4, max_occupancy),
-           amenities = COALESCE($5, amenities),
-           images = COALESCE($6, images)
+           amenities = COALESCE($5::jsonb, amenities),
+           images = COALESCE($6::jsonb, images)
        WHERE id = $7
        RETURNING *`,
-      [name, description, base_price, max_occupancy, amenities, images, id]
+      [
+        name, 
+        description, 
+        base_price, 
+        max_occupancy, 
+        amenities ? JSON.stringify(amenities) : amenities, 
+        images ? JSON.stringify(images) : images, 
+        id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -199,6 +215,137 @@ export const getRooms = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: result.rows,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 创建房间 (管理员)
+ * Create room (admin)
+ */
+export const createNewRoom = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: '输入验证失败',
+          details: errors.array(),
+        },
+      });
+    }
+
+    const { room_number, room_type_id, status } = req.body;
+
+    // 检查房号是否已存在
+    const existingRoom = await pool.query(
+      'SELECT id FROM rooms WHERE room_number = $1',
+      [room_number]
+    );
+
+    if (existingRoom.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ROOM_NUMBER_EXISTS',
+          message: '房间号已存在',
+        },
+      });
+    }
+
+    // 检查房型是否存在
+    const existingType = await pool.query(
+      'SELECT id FROM room_types WHERE id = $1',
+      [room_type_id]
+    );
+
+    if (existingType.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ROOM_TYPE_NOT_FOUND',
+          message: '房间类型不存在',
+        },
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO rooms (room_number, room_type_id, status)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [room_number, room_type_id, status || 'available']
+    );
+
+    // 获取完整的房间信息（包括房型详情）
+    const fullRoom = await pool.query(
+      `SELECT r.id, r.room_number, r.status, r.created_at, r.updated_at,
+              rt.id as room_type_id, rt.name as room_type_name, 
+              rt.description, rt.base_price, rt.max_occupancy, 
+              rt.amenities, rt.images
+       FROM rooms r
+       LEFT JOIN room_types rt ON r.room_type_id = rt.id
+       WHERE r.id = $1`,
+      [result.rows[0].id]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: fullRoom.rows[0],
+      message: '房间创建成功',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 删除房间 (管理员)
+ * Delete room (admin)
+ */
+export const removeRoom = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 检查是否有关联的预订
+    const bookingCheck = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM room_bookings 
+       WHERE room_id = $1 AND status IN ('pending', 'confirmed')`,
+      [id]
+    );
+
+    if (parseInt(bookingCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'HAS_ACTIVE_BOOKINGS',
+          message: '该房间有未完成的预订，无法删除',
+        },
+      });
+    }
+
+    const result = await pool.query(
+      'DELETE FROM rooms WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'ROOM_NOT_FOUND',
+          message: '房间不存在',
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: '房间已删除',
     });
   } catch (error) {
     next(error);
@@ -372,7 +519,7 @@ export const createGuestRoomBooking = async (req, res, next) => {
 
     // 检查房间是否可用
     const availabilityCheck = await pool.query(
-      `SELECT r.id, rt.base_price, rt.max_occupancy
+      `SELECT r.id, r.room_number, rt.name as room_type_name, rt.base_price, rt.max_occupancy
        FROM rooms r
        LEFT JOIN room_types rt ON r.room_type_id = rt.id
        WHERE r.id = $1 AND r.status = 'available'
@@ -433,6 +580,14 @@ export const createGuestRoomBooking = async (req, res, next) => {
     websocketService.notifyBookingCreated(booking, 'room');
     websocketService.notifyAvailabilityChanged(check_in_date, 'room');
 
+    // Send SMS notification to admin
+    await smsService.sendBookingNotification({
+      name: guest_name,
+      unit_name: `房间预定 (${room.room_type_name || 'Room'} - ${room.room_number || '未分配'})`,
+      book_time: check_in_date,
+      price: total_price
+    });
+
     res.status(201).json({
       success: true,
       data: booking,
@@ -466,7 +621,7 @@ export const createRoomBooking = async (req, res, next) => {
 
     // 检查房间是否可用
     const availabilityCheck = await pool.query(
-      `SELECT r.id, rt.base_price, rt.max_occupancy
+      `SELECT r.id, r.room_number, rt.name as room_type_name, rt.base_price, rt.max_occupancy
        FROM rooms r
        LEFT JOIN room_types rt ON r.room_type_id = rt.id
        WHERE r.id = $1 AND r.status = 'available'
@@ -526,6 +681,18 @@ export const createRoomBooking = async (req, res, next) => {
     // Notify via WebSocket
     websocketService.notifyBookingCreated(booking, 'room');
     websocketService.notifyAvailabilityChanged(check_in_date, 'room');
+
+    // Fetch user details for SMS
+    const userResult = await pool.query('SELECT full_name FROM users WHERE id = $1', [user_id]);
+    const userName = userResult.rows[0]?.full_name || 'Unknown User';
+
+    // Send SMS notification to admin
+    await smsService.sendBookingNotification({
+      name: userName,
+      unit_name: `房间预定 (${room.room_type_name || 'Room'} - ${room.room_number || '未分配'})`,
+      book_time: check_in_date,
+      price: total_price
+    });
 
     res.status(201).json({
       success: true,
@@ -749,6 +916,38 @@ export const updateRoomBooking = async (req, res, next) => {
       success: true,
       data: result.rows[0],
       message: '预订已更新',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 删除房间预订 (管理员)
+ * Delete room booking (admin)
+ */
+export const removeRoomBooking = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM room_bookings WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'BOOKING_NOT_FOUND',
+          message: '预订不存在',
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: '预订已删除',
     });
   } catch (error) {
     next(error);

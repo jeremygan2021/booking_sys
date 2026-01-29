@@ -112,6 +112,10 @@ deploy_on_server() {
 
         # 4. 启动后端容器
         echo "[INFO] 启动后端服务..."
+        
+        # 确保上传目录存在
+        mkdir -p /home/${SERVER_USER}/booking_data/uploads
+
         # 注意：这里使用 --network-alias server，这样前端可以通过 http://server:3000 访问
         sudo docker run -d \
             --name ${SERVER_CONTAINER_NAME} \
@@ -120,6 +124,7 @@ deploy_on_server() {
             --restart always \
             --env-file /tmp/.env \
             -p ${SERVER_PORT}:${SERVER_PORT} \
+            -v /home/${SERVER_USER}/booking_data/uploads:/app/uploads \
             ${SERVER_IMAGE_NAME}:${IMAGE_TAG}
 
         # 5. 启动前端容器

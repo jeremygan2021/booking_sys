@@ -208,6 +208,8 @@ const filteredRooms = computed(() => {
 const getRoomImage = (room: RoomType) => {
   if (room.images && Array.isArray(room.images) && room.images.length > 0) {
     const imagePath = room.images[0]
+    if (!imagePath) return 'https://via.placeholder.com/400x300?text=Room+Image'
+
     // 如果是完整URL，直接返回
     if (imagePath.startsWith('http')) {
       return imagePath
@@ -222,9 +224,24 @@ const getRoomImage = (room: RoomType) => {
 
 // 获取设施列表
 const getAmenities = (room: RoomType) => {
-  if (room.amenities && Array.isArray(room.amenities)) {
-    return room.amenities.slice(0, 3) // 只显示前3个
+  if (!room.amenities) return []
+
+  // 如果 amenities 是字符串（JSON 格式），则解析它
+  if (typeof room.amenities === 'string') {
+    try {
+      const parsed = JSON.parse(room.amenities)
+      return Array.isArray(parsed) ? parsed.slice(0, 3) : []
+    } catch (e) {
+      console.error('Error parsing amenities:', e)
+      return []
+    }
   }
+
+  // 如果已经是数组，直接返回
+  if (Array.isArray(room.amenities)) {
+    return room.amenities.slice(0, 3)
+  }
+
   return []
 }
 

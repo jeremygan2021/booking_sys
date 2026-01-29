@@ -42,6 +42,11 @@ const router = createRouter({
           component: () => import('../views/admin/ContentManagement.vue'),
         },
         {
+          path: 'rooms',
+          name: 'admin-rooms',
+          component: () => import('../views/admin/RoomManagement.vue'),
+        },
+        {
           path: 'bookings',
           name: 'admin-bookings',
           component: () => import('../views/admin/BookingManagement.vue'),

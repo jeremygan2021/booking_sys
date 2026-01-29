@@ -261,6 +261,7 @@ const currentPageTitle = computed(() => {
 const currentPageDescription = computed(() => {
   const descriptions: Record<string, string> = {
     'admin-content': '管理房间和餐厅的内容信息',
+    'admin-rooms': '管理具体的客房及其状态',
     'admin-bookings': '查看和管理所有预订记录',
     'admin-dining-rooms': '管理用餐房间和设施',
     'admin-menu': '管理餐厅菜系和套餐',

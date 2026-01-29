@@ -8,6 +8,8 @@ import {
   deleteRoomType,
   getRooms,
   getRoomById,
+  createNewRoom,
+  removeRoom,
   checkRoomAvailability,
   createRoomBooking,
   createGuestRoomBooking,
@@ -15,6 +17,7 @@ import {
   getRoomBookingById,
   updateRoomBookingStatus,
   updateRoomBooking,
+  removeRoomBooking,
   getAllRoomBookings,
 } from '../controllers/roomController.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
@@ -79,6 +82,9 @@ router.post('/bookings', authenticate, bookingValidation, createRoomBooking);
 // 更新预订 (管理员)
 router.put('/bookings/:id', authenticate, requireAdmin, updateRoomBooking);
 
+// 删除预订 (管理员)
+router.delete('/bookings/:id', authenticate, requireAdmin, removeRoomBooking);
+
 // 更新预订状态 (需要认证)
 router.put('/bookings/:id/status', authenticate, updateRoomBookingStatus);
 
@@ -93,6 +99,12 @@ router.get('/availability/check', checkRoomAvailability);
 
 // 获取所有房间 (公开)
 router.get('/', getRooms);
+
+// 创建房间 (管理员)
+router.post('/', authenticate, requireAdmin, createNewRoom);
+
+// 删除房间 (管理员)
+router.delete('/:id', authenticate, requireAdmin, removeRoom);
 
 // 获取单个房间 (公开)
 // 注意：这个路由必须放在最后，否则会拦截其他以 / 开头的路由

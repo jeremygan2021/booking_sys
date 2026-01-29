@@ -1,5 +1,6 @@
 import pool from '../db/connection.js';
 import websocketService from '../services/websocketService.js';
+import smsService from '../utils/smsService.js';
 
 /**
  * 获取所有菜系
@@ -353,6 +354,38 @@ export const createGuestRestaurantBooking = async (req, res, next) => {
     websocketService.notifyBookingCreated(booking, 'restaurant');
     websocketService.notifyAvailabilityChanged(booking_date, 'restaurant');
     
+    // Fetch details for SMS
+    const mealTypeMap = {
+      breakfast: '早餐',
+      lunch: '午餐',
+      dinner: '晚餐'
+    };
+    const mealTypeText = mealTypeMap[meal_type] || meal_type;
+    
+    let unitName = `餐厅预订 (${booking_date} ${mealTypeText} ${timeSlotConfig.start_time.substring(0, 5)})`;
+    
+    if (package_id) {
+       const pkgResult = await pool.query('SELECT name FROM meal_packages WHERE id = $1', [package_id]);
+       if (pkgResult.rows.length > 0) {
+           unitName += ` - 套餐: ${pkgResult.rows[0].name}`;
+       }
+    }
+
+    if (dining_room_id) {
+       const drResult = await pool.query('SELECT name FROM dining_rooms WHERE id = $1', [dining_room_id]);
+       if (drResult.rows.length > 0) {
+           unitName += ` - 包间: ${drResult.rows[0].name}`;
+       }
+    }
+
+    // Send SMS notification to admin
+    await smsService.sendBookingNotification({
+      name: guest_name,
+      unit_name: unitName,
+      book_time: `${booking_date} ${timeSlotConfig.start_time.substring(0, 5)}`,
+      price: total_price
+    });
+
     res.status(201).json({
       success: true,
       data: booking,
@@ -437,6 +470,35 @@ export const createRestaurantBooking = async (req, res, next) => {
     // Notify via WebSocket
     websocketService.notifyBookingCreated(booking, 'restaurant');
     websocketService.notifyAvailabilityChanged(booking_date, 'restaurant');
+    
+    // Fetch details for SMS
+    const mealTypeMap = {
+      breakfast: '早餐',
+      lunch: '午餐',
+      dinner: '晚餐'
+    };
+    const mealTypeText = mealTypeMap[meal_type] || meal_type;
+    
+    let unitName = `餐厅预订 (${booking_date} ${mealTypeText} ${time_slot.substring(0, 5)})`;
+    
+    if (package_id) {
+       const pkgResult = await pool.query('SELECT name FROM meal_packages WHERE id = $1', [package_id]);
+       if (pkgResult.rows.length > 0) {
+           unitName += ` - 套餐: ${pkgResult.rows[0].name}`;
+       }
+    }
+    
+    // Fetch user details
+    const userResult = await pool.query('SELECT full_name FROM users WHERE id = $1', [user_id]);
+    const userName = userResult.rows[0]?.full_name || 'Unknown User';
+
+    // Send SMS notification to admin
+    await smsService.sendBookingNotification({
+      name: userName,
+      unit_name: unitName,
+      book_time: `${booking_date} ${time_slot.substring(0, 5)}`,
+      price: total_price
+    });
     
     res.status(201).json({
       success: true,

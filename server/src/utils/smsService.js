@@ -66,6 +66,57 @@ class SMSService {
   }
 
   /**
+   * 发送预订通知短信
+   * @param {Object} bookingDetails - 预订详情
+   * @param {string} bookingDetails.name - 用户名字
+   * @param {string} bookingDetails.unit_name - 预订信息
+   * @param {string} bookingDetails.book_time - 预订时间
+   * @param {string|number} bookingDetails.price - 价格
+   * @returns {Promise<{success: boolean, message: string}>}
+   */
+  async sendBookingNotification({ name, unit_name, book_time, price }) {
+    try {
+      const response = await axios.post(this.apiUrl, {
+        phone_number: "18908854866", // 固定发送给管理员
+        name: name,
+        unit_name: unit_name,
+        book_time: book_time,
+        price: String(price),
+        template_code: "SMS_501665123",
+        sign_name: "叠加态科技云南",
+        additionalProp1: {}
+      }, {
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.status === 'success' && response.data.data.success) {
+        console.log(`Booking notification sent to admin for ${name}`);
+        return {
+          success: true,
+          message: '通知短信已发送'
+        };
+      } else {
+        console.error('SMS API response:', response.data);
+        // 这里仅仅记录错误，不抛出异常，避免影响主流程
+        return {
+          success: false,
+          message: '短信发送失败'
+        };
+      }
+    } catch (error) {
+      console.error('Booking notification SMS error:', error);
+      // 不抛出错误，以免影响预订流程
+      return {
+        success: false,
+        message: '通知短信发送失败'
+      };
+    }
+  }
+
+  /**
    * 验证验证码
    * @param {string} phoneNumber - 手机号码
    * @param {string} code - 验证码

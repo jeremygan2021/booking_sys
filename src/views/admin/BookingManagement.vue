@@ -48,6 +48,7 @@
         <input v-model="filterDate" type="date" class="filter-input" placeholder="选择日期" />
 
         <AdminButton variant="secondary" @click="resetFilters">重置筛选</AdminButton>
+        <AdminButton variant="primary" @click="openCreateModal">新建预订</AdminButton>
       </div>
     </div>
 
@@ -63,6 +64,30 @@
             <span :class="['type-badge', value === 'room' ? 'badge-room' : 'badge-restaurant']">
               {{ value === 'room' ? '房间' : '餐厅' }}
             </span>
+          </template>
+
+          <template #cell-details="{ row }">
+            <div class="details-info">
+              <template v-if="(row as Booking).type === 'room'">
+                <p class="font-medium text-gray-900">
+                  {{ (row as Booking).room_type_name || '标准间' }}
+                </p>
+                <p v-if="(row as Booking).room_number" class="text-xs text-gray-500">
+                  房号: {{ (row as Booking).room_number }}
+                </p>
+              </template>
+              <template v-else>
+                <p class="font-medium text-gray-900">
+                  {{ getMealTypeText((row as Booking).meal_type) }}
+                </p>
+                <p class="text-xs text-gray-500">
+                  时间: {{ (row as Booking).time_slot?.substring(0, 5) }}
+                </p>
+                <p v-if="(row as Booking).package_name" class="text-xs text-gray-500">
+                  套餐: {{ (row as Booking).package_name }}
+                </p>
+              </template>
+            </div>
           </template>
 
           <template #cell-status="{ value }">
@@ -116,6 +141,20 @@
                     stroke-linejoin="round"
                     stroke-width="2"
                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </button>
+              <button
+                @click="deleteBooking(row as Booking)"
+                class="action-btn delete-btn"
+                title="删除"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
               </button>
@@ -216,6 +255,68 @@
         <AdminButton variant="primary" @click="saveBooking" :loading="saving">保存</AdminButton>
       </template>
     </AdminModal>
+
+    <!-- Create Booking Modal -->
+    <AdminModal v-model="showCreateModal" title="新建预订" :close-on-overlay="false">
+      <div class="form-group">
+        <label class="form-label">预订类型</label>
+        <select v-model="createForm.type" class="form-input">
+          <option value="room">房间预订</option>
+          <option value="restaurant">餐厅预订</option>
+        </select>
+
+        <template v-if="createForm.type === 'room'">
+          <label class="form-label mt-4">房型</label>
+          <select v-model="createForm.roomTypeId" class="form-input">
+            <option value="" disabled>请选择房型</option>
+            <option v-for="type in roomTypes" :key="type.id" :value="type.id">
+              {{ type.name }} (¥{{ type.base_price }})
+            </option>
+          </select>
+
+          <div class="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <label class="form-label">入住日期</label>
+              <input v-model="createForm.checkInDate" type="date" class="form-input w-full" />
+            </div>
+            <div>
+              <label class="form-label">退房日期</label>
+              <input v-model="createForm.checkOutDate" type="date" class="form-input w-full" />
+            </div>
+          </div>
+        </template>
+
+        <div v-else class="mt-4 p-4 bg-yellow-50 text-yellow-800 rounded">
+          餐厅预订功能较为复杂，建议使用前台页面进行预订。
+        </div>
+
+        <template v-if="createForm.type === 'room'">
+          <label class="form-label mt-4">客人姓名</label>
+          <input v-model="createForm.guestName" type="text" class="form-input" />
+
+          <label class="form-label mt-4">联系电话</label>
+          <input v-model="createForm.guestPhone" type="text" class="form-input" />
+
+          <label class="form-label mt-4">客人数量</label>
+          <input v-model.number="createForm.guestCount" type="number" min="1" class="form-input" />
+
+          <label class="form-label mt-4">特殊要求</label>
+          <textarea v-model="createForm.specialRequests" rows="3" class="form-input"></textarea>
+        </template>
+      </div>
+
+      <template #footer>
+        <AdminButton variant="secondary" @click="showCreateModal = false">取消</AdminButton>
+        <AdminButton
+          variant="primary"
+          @click="createBooking"
+          :loading="creating"
+          :disabled="createForm.type === 'restaurant'"
+        >
+          创建
+        </AdminButton>
+      </template>
+    </AdminModal>
   </div>
 </template>
 
@@ -238,14 +339,31 @@ interface Booking {
   guest_count?: number
   special_requests?: string
   total_price?: number | string
+  // Restaurant specific
+  meal_type?: string
+  time_slot?: string
+  package_name?: string
+  dining_room_name?: string
+  // Room specific
+  room_number?: string
+  room_type_name?: string
+}
+
+interface RoomType {
+  id: string
+  name: string
+  base_price: string
+  max_occupancy: number
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 const loading = ref(false)
 const saving = ref(false)
+const creating = ref(false)
 const roomBookings = ref<Booking[]>([])
 const restaurantBookings = ref<Booking[]>([])
+const roomTypes = ref<RoomType[]>([])
 
 const filterType = ref('all')
 const filterStatus = ref('all')
@@ -254,11 +372,24 @@ const searchPhone = ref('')
 
 const showDetailModal = ref(false)
 const showEditModal = ref(false)
+const showCreateModal = ref(false)
 const selectedBooking = ref<Booking | null>(null)
 const editingBooking = ref<Booking | null>(null)
 
+const createForm = ref({
+  type: 'room',
+  roomTypeId: '',
+  checkInDate: '',
+  checkOutDate: '',
+  guestName: '',
+  guestPhone: '',
+  guestCount: 1,
+  specialRequests: '',
+})
+
 const tableColumns = [
   { key: 'type', label: '类型', width: '80px' },
+  { key: 'details', label: '预订详情', width: '200px' },
   { key: 'date', label: '日期', width: '120px' },
   { key: 'guest', label: '客人信息', width: '150px' },
   { key: 'status', label: '状态', width: '100px' },
@@ -392,13 +523,134 @@ async function saveBooking() {
   }
 }
 
+async function loadRoomTypes() {
+  try {
+    const response = await fetch(`${API_BASE}/rooms/types`)
+    const result = await response.json()
+    if (result.success) {
+      roomTypes.value = result.data
+    }
+  } catch (error) {
+    console.error('Failed to load room types:', error)
+  }
+}
+
+function openCreateModal() {
+  createForm.value = {
+    type: 'room',
+    roomTypeId: '',
+    checkInDate: '',
+    checkOutDate: '',
+    guestName: '',
+    guestPhone: '',
+    guestCount: 1,
+    specialRequests: '',
+  }
+  if (roomTypes.value.length === 0) {
+    loadRoomTypes()
+  }
+  showCreateModal.value = true
+}
+
+async function createBooking() {
+  if (createForm.value.type === 'room') {
+    if (
+      !createForm.value.roomTypeId ||
+      !createForm.value.checkInDate ||
+      !createForm.value.checkOutDate ||
+      !createForm.value.guestName ||
+      !createForm.value.guestPhone
+    ) {
+      alert('请填写完整信息')
+      return
+    }
+
+    creating.value = true
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers = { Authorization: `Bearer ${token}` }
+
+      // 1. Check availability
+      const availabilityRes = await axios.get(
+        `${API_BASE}/rooms/availability/check?check_in_date=${createForm.value.checkInDate}&check_out_date=${createForm.value.checkOutDate}&room_type_id=${createForm.value.roomTypeId}`,
+        { headers },
+      )
+
+      if (!availabilityRes.data.success || availabilityRes.data.data.available_rooms.length === 0) {
+        alert('该时间段无可用房间')
+        return
+      }
+
+      const roomId = availabilityRes.data.data.available_rooms[0].id
+
+      // 2. Create booking
+      await axios.post(
+        `${API_BASE}/rooms/bookings`,
+        {
+          room_id: roomId,
+          check_in_date: createForm.value.checkInDate,
+          check_out_date: createForm.value.checkOutDate,
+          guest_name: createForm.value.guestName,
+          guest_phone: createForm.value.guestPhone,
+          guest_count: createForm.value.guestCount,
+          special_requests: createForm.value.specialRequests,
+          status: 'confirmed', // Admin created bookings are usually confirmed
+        },
+        { headers },
+      )
+
+      alert('预订创建成功')
+      showCreateModal.value = false
+      await loadBookings()
+    } catch (error) {
+      console.error('Failed to create booking:', error)
+      alert('创建预订失败')
+    } finally {
+      creating.value = false
+    }
+  } else {
+    alert('暂不支持创建餐厅预订，请使用前台预订页面')
+  }
+}
+
+async function deleteBooking(booking: Booking) {
+  if (!confirm('确定要删除这条预订记录吗？此操作不可恢复。')) return
+
+  try {
+    const token = localStorage.getItem('auth_token')
+    const headers = { Authorization: `Bearer ${token}` }
+    const endpoint =
+      booking.type === 'room'
+        ? `${API_BASE}/rooms/bookings/${booking.id}`
+        : `${API_BASE}/restaurant/bookings/${booking.id}`
+
+    await axios.delete(endpoint, { headers })
+
+    alert('预订已删除')
+    await loadBookings()
+  } catch (error) {
+    console.error('Failed to delete booking:', error)
+    alert('删除失败，请重试')
+  }
+}
+
 function getStatusText(status: string) {
   const statusMap: Record<string, string> = {
     pending: '待确认',
     confirmed: '已确认',
+    completed: '已完成',
     cancelled: '已取消',
   }
   return statusMap[status] || status
+}
+
+function getMealTypeText(type?: string) {
+  const map: Record<string, string> = {
+    breakfast: '早餐',
+    lunch: '午餐',
+    dinner: '晚餐',
+  }
+  return type ? map[type] || type : '用餐'
 }
 
 function formatDate(date?: string) {
@@ -551,6 +803,11 @@ function formatDate(date?: string) {
   color: #991b1b;
 }
 
+.status-completed {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
 .guest-info {
   display: flex;
   flex-direction: column;
@@ -585,6 +842,11 @@ function formatDate(date?: string) {
 .edit-btn:hover {
   background-color: #fef3c7;
   color: #92400e;
+}
+
+.delete-btn:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
 }
 
 /* Booking Detail */

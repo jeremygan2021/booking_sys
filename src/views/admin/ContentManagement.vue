@@ -16,29 +16,46 @@
     <!-- Room Content Management -->
     <div v-if="activeTab === 'rooms'" class="content-section">
       <AdminCard title="房间内容管理" subtitle="编辑房间类型的介绍和信息">
-        <div class="room-types-list">
-          <div
-            v-for="roomType in roomTypes"
-            :key="roomType.id"
-            class="room-type-item"
-            @click="editRoomType(roomType)"
-          >
-            <div class="room-type-info">
-              <h4>{{ roomType.name }}</h4>
-              <p class="text-sm text-gray-600">{{ roomType.description?.substring(0, 100) }}...</p>
+        <div class="flex justify-between items-center mb-4">
+          <div class="room-types-list flex-1">
+            <div
+              v-for="roomType in roomTypes"
+              :key="roomType.id"
+              class="room-type-item"
+              @click="editRoomType(roomType)"
+            >
+              <div class="room-type-info">
+                <h4>{{ roomType.name }}</h4>
+                <p class="text-sm text-gray-600">
+                  {{ roomType.description?.substring(0, 100) }}...
+                </p>
+              </div>
+              <div class="action-btns">
+                <button class="edit-btn" @click.stop="editRoomType(roomType)" title="编辑">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button class="delete-btn" @click.stop="deleteRoomType(roomType.id)" title="删除">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <button class="edit-btn">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </button>
           </div>
         </div>
+        <AdminButton variant="primary" @click="createRoomType"> + 添加房间类型 </AdminButton>
       </AdminCard>
     </div>
 
@@ -131,7 +148,11 @@
     </div>
 
     <!-- Edit Room Type Modal -->
-    <AdminModal v-model="showRoomModal" title="编辑房间类型" :close-on-overlay="false">
+    <AdminModal
+      v-model="showRoomModal"
+      :title="isCreating ? '添加房间类型' : '编辑房间类型'"
+      :close-on-overlay="false"
+    >
       <div v-if="editingRoom" class="form-group">
         <label class="form-label">房间名称</label>
         <input v-model="editingRoom.name" type="text" class="form-input" />
@@ -144,6 +165,35 @@
 
         <label class="form-label mt-4">最大入住人数</label>
         <input v-model.number="editingRoom.max_occupancy" type="number" class="form-input" />
+
+        <label class="form-label mt-4">房间设施</label>
+        <div class="amenities-manager">
+          <div class="amenities-input-group">
+            <input
+              v-model="newAmenity"
+              type="text"
+              class="form-input"
+              placeholder="输入设施名称后按回车添加"
+              @keyup.enter="addAmenity"
+            />
+            <button class="add-btn" @click="addAmenity" type="button">添加</button>
+          </div>
+          <div
+            v-if="editingRoom.amenities && editingRoom.amenities.length > 0"
+            class="amenities-list"
+          >
+            <span
+              v-for="(amenity, index) in editingRoom.amenities"
+              :key="index"
+              class="amenity-tag"
+            >
+              {{ amenity }}
+              <button class="remove-amenity-btn" @click="removeAmenity(index)" type="button">
+                ×
+              </button>
+            </span>
+          </div>
+        </div>
 
         <label class="form-label mt-4">房间图片</label>
         <div class="image-selector">
@@ -230,6 +280,8 @@ interface RoomType {
   description?: string
   base_price?: number
   max_occupancy?: number
+  images?: string[]
+  amenities?: string[]
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -248,6 +300,8 @@ const tabs = [
 const roomTypes = ref<RoomType[]>([])
 const showRoomModal = ref(false)
 const editingRoom = ref<RoomType | null>(null)
+const isCreating = ref(false)
+const newAmenity = ref('')
 
 // Restaurant Content
 const restaurantContent = ref('<p>欢迎来到爱云香舍餐厅...</p>')
@@ -355,12 +409,50 @@ async function loadAvailableImages() {
   }
 }
 
+function createRoomType() {
+  isCreating.value = true
+  newAmenity.value = ''
+  editingRoom.value = {
+    id: 0, // Placeholder
+    name: '',
+    description: '',
+    base_price: 0,
+    max_occupancy: 1,
+    images: [],
+    amenities: [],
+  }
+  showRoomModal.value = true
+}
+
 function editRoomType(room: RoomType) {
+  isCreating.value = false
+  newAmenity.value = ''
   editingRoom.value = {
     ...room,
     images: Array.isArray(room.images) ? room.images : [],
+    amenities: Array.isArray(room.amenities) ? room.amenities : [],
   }
   showRoomModal.value = true
+}
+
+function addAmenity() {
+  if (!editingRoom.value || !newAmenity.value.trim()) return
+
+  if (!editingRoom.value.amenities) {
+    editingRoom.value.amenities = []
+  }
+
+  if (!editingRoom.value.amenities.includes(newAmenity.value.trim())) {
+    editingRoom.value.amenities.push(newAmenity.value.trim())
+  }
+
+  newAmenity.value = ''
+}
+
+function removeAmenity(index: number) {
+  if (editingRoom.value && editingRoom.value.amenities) {
+    editingRoom.value.amenities.splice(index, 1)
+  }
 }
 
 async function saveRoomType() {
@@ -379,19 +471,60 @@ async function saveRoomType() {
 
     console.log('Saving room type:', roomData) // 调试日志
 
-    await axios.put(`${API_BASE}/content/room-types/${editingRoom.value.id}`, roomData, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (isCreating.value) {
+      await axios.post(`${API_BASE}/rooms/types`, roomData, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      alert('房间类型已创建')
+    } else {
+      await axios.put(`${API_BASE}/rooms/types/${editingRoom.value.id}`, roomData, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      alert('房间类型已更新')
+    }
+
     await loadRoomTypes()
     showRoomModal.value = false
-    alert('房间类型已更新')
-  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error('Failed to save room type:', error)
-    const err = error as { response?: { data?: { details?: string; error?: string } } }
-    const errorMsg = err.response?.data?.details || err.response?.data?.error || '保存失败，请重试'
+
+    let errorMsg = '保存失败，请重试'
+    if (error.response && error.response.data) {
+      const data = error.response.data
+      if (typeof data.details === 'string') {
+        errorMsg = data.details
+      } else if (typeof data.error === 'string') {
+        errorMsg = data.error
+      } else if (typeof data.message === 'string') {
+        errorMsg = data.message
+      } else if (data.error && typeof data.error === 'object') {
+        // 如果 error 是对象（包含 code, message 等），将其转换为字符串
+        errorMsg = data.error.message || JSON.stringify(data.error)
+      }
+    } else if (error instanceof Error) {
+      errorMsg = error.message
+    }
+
     alert(errorMsg)
   } finally {
     saving.value = false
+  }
+}
+
+async function deleteRoomType(id: string | number) {
+  if (!confirm('确定要删除这个房间类型吗？此操作不可恢复。')) return
+
+  try {
+    const token = localStorage.getItem('auth_token')
+    await axios.delete(`${API_BASE}/rooms/types/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    alert('房间类型已删除')
+    await loadRoomTypes()
+  } catch (error) {
+    console.error('Failed to delete room type:', error)
+    alert('删除失败，请重试')
   }
 }
 
@@ -576,7 +709,13 @@ function getFullImageUrl(path: string) {
   margin-bottom: 0.25rem;
 }
 
-.edit-btn {
+.action-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn,
+.delete-btn {
   padding: 0.5rem;
   background-color: #f3f4f6;
   border: none;
@@ -584,10 +723,18 @@ function getFullImageUrl(path: string) {
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .edit-btn:hover {
   background-color: var(--color-deep-blue);
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #ef4444;
   color: white;
 }
 
@@ -740,6 +887,71 @@ function getFullImageUrl(path: string) {
 
 .mt-6 {
   margin-top: 1.5rem;
+}
+
+/* Amenities Manager */
+.amenities-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.amenities-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-btn {
+  padding: 0.625rem 1rem;
+  background-color: var(--color-deep-blue);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.add-btn:hover {
+  background-color: #1e40af;
+}
+
+.amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.amenity-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.remove-amenity-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-amenity-btn:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
 }
 
 /* Image Selector */
